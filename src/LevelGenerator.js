@@ -203,15 +203,35 @@ export class LevelGenerator {
     };
 
     // Pre-computed reusable prefab geometries (NEVER constructed inside spawnChunk)
+    const hexPortalGeo = this._buildHexPortalGeo(12.0, 9.0, 6.0);
+    const triArchGeo = this._buildTriArchGeo(28, 22, 8, 3.5);
+    const buttressPylonGeo = this._buildButtressPylonGeo(6, 35, 8);
+    const citadelPlateGeo = new THREE.BoxGeometry(24, 3, 20);
+    const spikeHazardGeo = new THREE.ConeGeometry(1.2, 4.0, 4);
+    const insetMonolithGeo = new THREE.BoxGeometry(10, 48, 12);
+    const channelStripGeo = new THREE.BoxGeometry(0.8, 1, 0.25);
+    const approachStripGeo = new THREE.BoxGeometry(1, 0.15, 0.08);
+    const edgeBevelGeo = new THREE.BoxGeometry(0.3, 1, 0.3);
+    const hexInnerTrimGeo = new THREE.RingGeometry(8.8, 9.2, 6);
+    const citadelUnderStripGeo = new THREE.BoxGeometry(20.0, 0.08, 1.2);
+    const citadelEdgeTrimGeo = new THREE.BoxGeometry(0.1, 0.4, 20.1);
+
     this.prefabGeos = {
-      hexPortal: this._buildHexPortalGeo(12.0, 9.0, 6.0),
-      triArch: this._buildTriArchGeo(28, 22, 8, 3.5),
-      buttressPylon: this._buildButtressPylonGeo(6, 35, 8),
-      citadelPlate: new THREE.BoxGeometry(24, 3, 20),
-      spikeHazard: new THREE.ConeGeometry(1.2, 4.0, 4),
-      channelStrip: new THREE.BoxGeometry(0.8, 1, 0.25),
-      approachStrip: new THREE.BoxGeometry(1, 0.15, 0.08),
-      edgeBevel: new THREE.BoxGeometry(0.3, 1, 0.3),
+      hexPortal: hexPortalGeo,
+      triArch: triArchGeo,
+      buttressPylon: buttressPylonGeo,
+      citadelPlate: citadelPlateGeo,
+      citadelPlates: citadelPlateGeo,
+      spikeHazard: spikeHazardGeo,
+      hazardSpikes: spikeHazardGeo,
+      insetMonolith: insetMonolithGeo,
+      insetMonoliths: insetMonolithGeo,
+      channelStrip: channelStripGeo,
+      approachStrip: approachStripGeo,
+      edgeBevel: edgeBevelGeo,
+      hexInnerTrim: hexInnerTrimGeo,
+      citadelUnderStrip: citadelUnderStripGeo,
+      citadelEdgeTrim: citadelEdgeTrimGeo,
     };
 
     // Build persistent wave lava abyss & ember system
@@ -699,8 +719,9 @@ export class LevelGenerator {
   /**
    * Spawns a floating citadel plate with underside glow & edge trims (v4.0 Architectural Prefab).
    */
-  spawnCitadelPlate({ x, y, z, rx = 0, ry = 0, rz = 0, chunk = null }) {
-    const geo = this.prefabGeos.citadelPlate;
+  spawnCitadelPlate({ x, y, z, w = 24.0, h = 3.0, d = 20.0, rx = 0, ry = 0, rz = 0, chunk = null }) {
+    const isStandard = (Math.abs(w - 24.0) < 0.1 && Math.abs(h - 3.0) < 0.1 && Math.abs(d - 20.0) < 0.1);
+    const geo = isStandard ? this.prefabGeos.citadelPlate : new THREE.BoxGeometry(w, h, d);
     const mesh = new THREE.Mesh(geo, this.materials.obsidian);
     mesh.position.set(x, y, z);
     mesh.rotation.set(rx, ry, rz);
@@ -708,41 +729,42 @@ export class LevelGenerator {
     mesh.receiveShadow = true;
 
     // Glowing underside panel strips
+    const underW = Math.max(4.0, w - 4.0);
     for (let i = -2; i <= 2; i++) {
       const underStrip = new THREE.Mesh(
-        new THREE.BoxGeometry(20.0, 0.08, 1.2),
+        new THREE.BoxGeometry(underW, 0.08, Math.max(0.6, d * 0.06)),
         this.materials.emissiveBlue
       );
-      underStrip.position.set(0, -1.54, i * 3.5);
+      underStrip.position.set(0, -h / 2 - 0.04, i * (d * 0.175));
       underStrip.raycast = NO_RAYCAST;
       mesh.add(underStrip);
     }
 
     // Glowing edge trims
     const trimMat = this.materials.emissiveCyan;
-    const edgeTrimL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 20.1), trimMat);
-    edgeTrimL.position.set(-12.02, 0, 0);
+    const edgeTrimL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, d + 0.1), trimMat);
+    edgeTrimL.position.set(-w / 2 - 0.02, 0, 0);
     edgeTrimL.raycast = NO_RAYCAST;
     mesh.add(edgeTrimL);
 
-    const edgeTrimR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 20.1), trimMat);
-    edgeTrimR.position.set(12.02, 0, 0);
+    const edgeTrimR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, d + 0.1), trimMat);
+    edgeTrimR.position.set(w / 2 + 0.02, 0, 0);
     edgeTrimR.raycast = NO_RAYCAST;
     mesh.add(edgeTrimR);
 
     // Approach strip on -Z face
     const approachMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(20.0, 0.25, 0.1),
+      new THREE.BoxGeometry(Math.max(4.0, w - 4.0), 0.25, 0.1),
       this.materials.safeApproach
     );
-    approachMesh.position.set(0, 0, -10.05);
+    approachMesh.position.set(0, 0, -d / 2 - 0.05);
     approachMesh.raycast = NO_RAYCAST;
     mesh.add(approachMesh);
 
     // Physics body
     const body = new CANNON.Body({
       mass: 0,
-      shape: new CANNON.Box(new CANNON.Vec3(12.0, 1.5, 10.0)),
+      shape: new CANNON.Box(new CANNON.Vec3(w / 2, h / 2, d / 2)),
       position: new CANNON.Vec3(x, y, z),
       material: this.physicsWorld?.worldMaterial || undefined,
     });
@@ -851,6 +873,14 @@ export class LevelGenerator {
   }
 
   /**
+   * Spawns an inset-channel monolith (v4.0 Architectural Prefab).
+   */
+  spawnInsetMonolith(options) {
+    const { w = 10.0, h = 48.0, d = 12.0, ...rest } = options;
+    return this.spawnBlock({ w, h, d, ...rest });
+  }
+
+  /**
    * Spawns an architectural block, routing to the appropriate prefab method.
    */
   spawnArchitecturalBlock(options) {
@@ -866,6 +896,9 @@ export class LevelGenerator {
         return this.spawnCitadelPlate(rest);
       case 'hazardSpikes':
         return this.spawnHazardSpikeArray(rest);
+      case 'insetMonolith':
+      case 'insetMonoliths':
+        return this.spawnInsetMonolith(rest);
       default:
         return this.spawnBlock(rest);
     }
@@ -1704,6 +1737,9 @@ export class LevelGenerator {
       x: cursor.x,
       y: cursor.y + 36.0,
       z: bridgeZ,
+      w: 70.0,
+      h: 10.0,
+      d: 20.0,
       chunk,
     });
 
@@ -1748,7 +1784,7 @@ export class LevelGenerator {
     });
 
     // 4. Approach flanking towers (Inset-Channel Monoliths)
-    this.spawnBlock({
+    this.spawnInsetMonolith({
       x: cursor.x - 30.0,
       y: cursor.y + 12.0,
       z: cursor.z - 28.0,
@@ -1757,7 +1793,7 @@ export class LevelGenerator {
       d: 12.0,
       chunk,
     });
-    this.spawnBlock({
+    this.spawnInsetMonolith({
       x: cursor.x + 30.0,
       y: cursor.y + 12.0,
       z: cursor.z - 28.0,
@@ -1860,7 +1896,7 @@ export class LevelGenerator {
       const rightX = cursor.x + (28.0 - flare);
       const wallY = cursor.y + 12.0;
 
-      this.spawnBlock({
+      this.spawnInsetMonolith({
         x: leftX,
         y: wallY,
         z: wz,
@@ -1871,7 +1907,7 @@ export class LevelGenerator {
         chunk,
       });
 
-      this.spawnBlock({
+      this.spawnInsetMonolith({
         x: rightX,
         y: wallY,
         z: wz,
@@ -1962,8 +1998,8 @@ export class LevelGenerator {
       chunk,
     });
 
-    // Twin Monumental Slingshot Obelisks at X = ±20m
-    this.spawnBlock({
+    // Twin Monumental Slingshot Obelisks at X = ±20m: Inset-Channel Monoliths
+    this.spawnInsetMonolith({
       x: cursor.x - 20.0,
       y: cursor.y + 25.0,
       z: obeliskZ,
@@ -1972,7 +2008,7 @@ export class LevelGenerator {
       d: obeliskWidth,
       chunk,
     });
-    this.spawnBlock({
+    this.spawnInsetMonolith({
       x: cursor.x + 20.0,
       y: cursor.y + 25.0,
       z: obeliskZ,

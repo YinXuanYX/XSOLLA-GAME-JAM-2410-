@@ -49,6 +49,7 @@ container.appendChild(renderer.domElement);
 
 // 2b. Post-Processing Pipeline (UnrealBloomPass + OutputPass)
 export const composer = new EffectComposer(renderer);
+composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 composer.addPass(new RenderPass(scene, camera));
 
 export const bloomPass = new UnrealBloomPass(
@@ -382,8 +383,10 @@ if (pill4) pill4.addEventListener('click', () => switchCourse(4));
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
+  const pr = Math.min(window.devicePixelRatio, 2);
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(pr);
+  composer.setPixelRatio(pr);
   composer.setSize(window.innerWidth, window.innerHeight);
   bloomPass.resolution.set(window.innerWidth, window.innerHeight);
 });
