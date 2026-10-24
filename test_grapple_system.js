@@ -52,6 +52,40 @@ assert(grapple.hooks.right.ropeMesh instanceof THREE.Mesh, 'hooks.right.ropeMesh
 assert(grapple.hooks.right.clawMesh instanceof THREE.Mesh, 'hooks.right.clawMesh is THREE.Mesh');
 assert(grapple.getActiveHookCount() === 0, 'Initial active hook count is 0');
 
+// Tron / Beat Saber Opposing Dual Colors (Version 2.0)
+assert(grapple.hooks.left.ropeMesh.material.color.getHex() === CONFIG.COLORS.HOOK_LEFT, 'Left rope uses CONFIG.COLORS.HOOK_LEFT (0xff0044 Red)');
+assert(grapple.hooks.left.clawMesh.material.color.getHex() === CONFIG.COLORS.HOOK_LEFT, 'Left claw uses CONFIG.COLORS.HOOK_LEFT (0xff0044 Red)');
+assert(grapple.hooks.right.ropeMesh.material.color.getHex() === CONFIG.COLORS.HOOK_RIGHT, 'Right rope uses CONFIG.COLORS.HOOK_RIGHT (0x00aaff Blue)');
+assert(grapple.hooks.right.clawMesh.material.color.getHex() === CONFIG.COLORS.HOOK_RIGHT, 'Right claw uses CONFIG.COLORS.HOOK_RIGHT (0x00aaff Blue)');
+
+// Preview Ring Z-Fighting Fix (Version 2.0)
+assert(grapple.previewRing.material.polygonOffset === true, 'Preview ring polygonOffset is true');
+assert(grapple.previewRing.material.polygonOffsetFactor === -2, 'Preview ring polygonOffsetFactor is -2');
+assert(grapple.previewRing.material.polygonOffsetUnits === -2, 'Preview ring polygonOffsetUnits is -2');
+assert(grapple.previewRing.material.depthWrite === false, 'Preview ring depthWrite is false');
+
+// Pooled Impact Dust/Spark Burst System (Version 2.0)
+assert(Array.isArray(grapple.impactBursts), 'grapple.impactBursts array exists');
+assert(grapple.impactBursts.length === CONFIG.FX.IMPACT_POOL_SIZE, `impactBursts pool size is ${CONFIG.FX.IMPACT_POOL_SIZE}`);
+for (let b = 0; b < grapple.impactBursts.length; b++) {
+  const burst = grapple.impactBursts[b];
+  assert(burst.active === false, `Burst ${b} initially inactive`);
+  assert(burst.timer === 0, `Burst ${b} timer initially 0`);
+  assert(Array.isArray(burst.particles) && burst.particles.length === CONFIG.FX.IMPACT_PARTICLE_COUNT, `Burst ${b} has ${CONFIG.FX.IMPACT_PARTICLE_COUNT} particles`);
+  for (let p = 0; p < burst.particles.length; p++) {
+    const pt = burst.particles[p];
+    assert(pt.mesh instanceof THREE.Mesh, `Particle ${p} mesh is THREE.Mesh`);
+    assert(pt.mesh.geometry instanceof THREE.BoxGeometry, `Particle ${p} geometry is BoxGeometry`);
+    assert(pt.mesh.geometry.parameters.width === 0.14, `Particle ${p} box width is 0.14`);
+    assert(pt.mesh.visible === false, `Particle ${p} initially invisible`);
+    assert(scene.children.includes(pt.mesh), `Particle ${p} mesh added to scene`);
+    assert(pt.velocity instanceof THREE.Vector3, `Particle ${p} velocity is Vector3`);
+    assert(pt.rotSpeed instanceof THREE.Vector3, `Particle ${p} rotSpeed is Vector3`);
+  }
+}
+const boxMeshesInScene = scene.children.filter((c) => c.isMesh && c.geometry instanceof THREE.BoxGeometry && c.geometry.parameters.width === 0.14);
+assert(boxMeshesInScene.length === CONFIG.FX.IMPACT_POOL_SIZE * CONFIG.FX.IMPACT_PARTICLE_COUNT, `Exactly ${CONFIG.FX.IMPACT_POOL_SIZE * CONFIG.FX.IMPACT_PARTICLE_COUNT} particle meshes in scene (no duplicate pools)`);
+
 // ----------------------------------------------------
 // TEST 2: findTargetPoint (Direct & Magnetism Cone)
 // ----------------------------------------------------
@@ -187,6 +221,7 @@ grapple.updateVisuals(meshes);
 
 assert(grapple.previewRing.visible === true, 'Preview ring visible when aiming at wall');
 assertClose(grapple.previewRing.position.z, -34.5 + 0.02, 0.05, 'Preview ring offset slightly along surface normal');
+assertClose(grapple.previewRing.position.z, -34.5 + 0.06, 1e-4, 'Preview ring offset along normal by exactly +0.06m');
 
 // Fire hook and check rope transform
 grapple.tryFireHook('left', meshes);
@@ -210,6 +245,127 @@ assert(grapple.targetInfo.hit === false, 'targetInfo.hit is false after reset');
 
 grapple.dispose();
 assert(true, 'grapple.dispose() completes cleanly');
+
+// ----------------------------------------------------
+// TEST 8: Version 2.0 Pooled Impact Dust/Spark Burst System
+// ----------------------------------------------------
+console.log('\n--- TEST 8: Version 2.0 Pooled Impact Dust/Spark Burst System ---');
+const v2Scene = new THREE.Scene();
+const v2PhysicsWorld = new PhysicsWorld();
+const v2Player = new PlayerController(v2Scene, v2PhysicsWorld);
+const v2Camera = new THREE.PerspectiveCamera(CONFIG.CAMERA.BASE_FOV, 16 / 9, 0.1, 1000);
+v2Camera.position.set(0, 5, 5);
+v2Camera.lookAt(0, 5, -50);
+v2Camera.updateMatrixWorld(true);
+
+const v2Grapple = new GrappleSystem(v2Scene, v2Camera, v2Player, CONFIG);
+
+// 1. spawnImpactDust directly on anchor point
+const contactPoint = new THREE.Vector3(10, 15, -25);
+const contactNormal = new THREE.Vector3(0, 0, 1); // facing +Z away from wall
+const burst = v2Grapple.spawnImpactDust(contactPoint, contactNormal, CONFIG.COLORS.HOOK_LEFT);
+
+assert(burst !== null, 'spawnImpactDust returned active burst');
+assert(burst.active === true, 'Burst is active');
+assert(burst.timer === 0, 'Burst timer initialized to 0');
+
+for (let i = 0; i < burst.particles.length; i++) {
+  const p = burst.particles[i];
+  assert(p.mesh.visible === true, `Particle ${i} visible after spawn`);
+  assertClose(p.mesh.scale.x, 1.0, 1e-3, `Particle ${i} scale is 1.0`);
+
+  // Position at contactPoint + contactNormal * 0.08
+  assertClose(p.mesh.position.x, 10, 1e-3, `Particle ${i} pos X is 10`);
+  assertClose(p.mesh.position.y, 15, 1e-3, `Particle ${i} pos Y is 15`);
+  assertClose(p.mesh.position.z, -25 + 0.08, 1e-3, `Particle ${i} pos Z is -24.92`);
+
+  // Colors: even particles = hookColor (HOOK_LEFT 0xff0044), odd particles = SPARK_WHITE (0xd8f8ff)
+  if (i % 2 === 0) {
+    assert(p.mesh.material.color.getHex() === CONFIG.COLORS.HOOK_LEFT, `Particle ${i} (even) color is HOOK_LEFT (0xff0044)`);
+  } else {
+    assert(p.mesh.material.color.getHex() === CONFIG.COLORS.SPARK_WHITE, `Particle ${i} (odd) color is SPARK_WHITE (0xd8f8ff)`);
+  }
+
+  // Velocity dot normal > 0 (hemisphere reflection)
+  const velDotNormal = p.velocity.dot(contactNormal);
+  assert(velDotNormal > 0, `Particle ${i} velocity points outward from wall (vel . normal = ${velDotNormal.toFixed(2)} > 0)`);
+  assert(p.rotSpeed.length() > 0, `Particle ${i} rotation speed is non-zero`);
+}
+
+// 2. Hook firing spawns correct impact dust color
+const v2Wall = new THREE.Mesh(new THREE.BoxGeometry(20, 20, 1), new THREE.MeshBasicMaterial());
+v2Wall.position.set(0, 5, -35);
+v2Wall.updateMatrixWorld(true);
+v2Player.reset(0, 5, 0);
+
+// Left hook fire -> spawns burst with HOOK_LEFT
+v2Grapple.tryFireHook('left', [v2Wall]);
+const activeBursts = v2Grapple.impactBursts.filter(b => b.active);
+assert(activeBursts.length >= 2, 'Two bursts active after firing left hook');
+const hookBurst = activeBursts[activeBursts.length - 1];
+assert(hookBurst.particles[0].mesh.material.color.getHex() === CONFIG.COLORS.HOOK_LEFT, 'Left hook impact dust colored HOOK_LEFT');
+
+// Right hook fire -> spawns burst with HOOK_RIGHT
+v2Grapple.tryFireHook('right', [v2Wall]);
+const rightBurst = v2Grapple.impactBursts.filter(b => b.active).pop();
+assert(rightBurst.particles[0].mesh.material.color.getHex() === CONFIG.COLORS.HOOK_RIGHT, 'Right hook impact dust colored HOOK_RIGHT');
+
+// 3. Update animation, gravity, scale shrink, and expiration
+const testParticle = rightBurst.particles[0];
+const initialVelY = testParticle.velocity.y;
+
+// Step simulation by 0.1s
+v2Grapple.updateVisuals([v2Wall], 0.1);
+assertClose(rightBurst.timer, 0.1, 1e-4, 'Burst timer advanced by dt (0.1s)');
+const expectedScale = 1.0 - (0.1 / CONFIG.FX.IMPACT_DURATION);
+assertClose(testParticle.mesh.scale.x, expectedScale, 0.01, 'Particle scale decayed linearly with time');
+assert(testParticle.velocity.y < initialVelY, 'Particle vertical velocity decreased due to gravity (-9.8 * dt)');
+
+// Advance past CONFIG.FX.IMPACT_DURATION (0.38s)
+v2Grapple.updateVisuals([v2Wall], 0.35); // total timer = 0.45s > 0.38s
+assert(rightBurst.active === false, 'Burst deactivated after exceeding IMPACT_DURATION');
+for (const p of rightBurst.particles) {
+  assert(p.mesh.visible === false, 'All burst particles hidden after expiration');
+}
+
+// 4. Pool slot recycling (filling all 6 slots and verifying reuse of oldest slot)
+for (let i = 0; i < CONFIG.FX.IMPACT_POOL_SIZE + 2; i++) {
+  v2Grapple.spawnImpactDust(contactPoint, contactNormal, CONFIG.COLORS.HOOK_LEFT);
+}
+assert(v2Grapple.impactBursts.every(b => b.active), 'All pool slots filled and active without crash');
+
+// 5. releaseAll() preserves active dust bursts
+v2Grapple.releaseAll();
+const activeAfterRelease = v2Grapple.impactBursts.filter(b => b.active);
+assert(activeAfterRelease.length === CONFIG.FX.IMPACT_POOL_SIZE, 'releaseAll() leaves active dust bursts to finish fading');
+
+// 6. reset() hides and resets all bursts
+v2Grapple.reset();
+assert(v2Grapple.impactBursts.every(b => !b.active), 'All bursts inactive after reset()');
+for (const b of v2Grapple.impactBursts) {
+  for (const p of b.particles) {
+    assert(p.mesh.visible === false, 'All particles hidden after reset()');
+  }
+}
+const visibleParticlesAfterReset = v2Scene.children.filter((c) => c.isMesh && c.visible && c.geometry instanceof THREE.BoxGeometry && c.geometry.parameters.width === 0.14);
+assert(visibleParticlesAfterReset.length === 0, 'Zero particle meshes visible in scene after reset() (no ghost particle leak)');
+
+// Verify updateImpactBursts(0) does not advance timer
+v2Grapple.spawnImpactDust(contactPoint, contactNormal, CONFIG.COLORS.HOOK_LEFT);
+const pausedBurst = v2Grapple.impactBursts.find((b) => b.active);
+v2Grapple.updateImpactBursts(0);
+assert(pausedBurst.timer === 0, 'updateImpactBursts(0) does not advance burst timer');
+v2Grapple.reset();
+
+// 7. setScene transfers impact meshes to new scene
+const transferScene = new THREE.Scene();
+v2Grapple.setScene(transferScene);
+assert(transferScene.children.includes(v2Grapple.impactBursts[0].particles[0].mesh), 'Impact particles transferred to new scene');
+
+// 8. dispose() cleans up particle resources
+v2Grapple.dispose();
+assert(v2Grapple.impactBursts.length === 0, 'impactBursts array emptied on dispose');
+assert(v2Grapple.impactBoxGeo === null, 'impactBoxGeo null after dispose');
 
 console.log('\n====================================================');
 console.log('🎉 ALL UNIFIED GRAPPLE SYSTEM TESTS PASSED!');

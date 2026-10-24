@@ -1,7 +1,7 @@
 /**
- * AERO-HOOK Configuration Constants
+ * AERO-HOOK Configuration Constants (Version 3.0)
  * Master configuration object containing all physics constants, movement speeds,
- * grapple mechanics, camera tuning, level settings, colors, and course presets.
+ * grapple mechanics, camera tuning, level settings, colors, fx, and course presets.
  */
 export const CONFIG = {
   PHYSICS: {
@@ -42,131 +42,139 @@ export const CONFIG = {
     PITCH_MAX: Math.PI * 0.44,     // +80 degrees
   },
   LEVEL: {
-    VOID_DEATH_Y: -30.0,           // Y threshold for instant death
+    VOID_DEATH_Y: -36.0,           // Y threshold for instant death (-36.0m allows swings above lava abyss at -35.0m)
     ABYSS_VISUAL_Y: -35.0,         // Y position of animated low-poly lava/grid plane
     STANDARD_CHUNK_COUNT: 8,       // Number of chunks in a standard Time-Trial course
     ENDLESS_ACTIVE_CHUNKS: 5,      // Number of chunks kept alive simultaneously in Endless Mode
   },
   COLORS: {
     SKY_TOP: 0x020308,             // Deep Tron pitch black-blue
-    SKY_BOTTOM: 0x070b16,          // Dark cyber horizon
+    SKY_BOTTOM: 0x060b18,          // Dark cyber city horizon
     FOG: 0x040711,                 // Deep void fog
-    HOOK_LEFT: 0xff0044,           // Beat Saber Crimson Red - Left Hook / Left Side
-    HOOK_RIGHT: 0x00aaff,          // Beat Saber Electric Blue - Right Hook / Right Side
-    BLOCK_BASE: 0x10141f,          // Dark obsidian futuristic monolith base
-    BLOCK_NEON_EDGE: 0x00f0ff,     // Cyan Tron circuit wireframe edge
-    BLOCK_NEON_ALT: 0x3b82f6,      // Electric blue secondary circuit stripe
-    START_PAD_BASE: 0x10141f,      // Dark obsidian start pad base
+    HOOK_LEFT: 0xff0044,           // Beat Saber Crimson Red (Left Hook / Left Side)
+    HOOK_RIGHT: 0x00aaff,          // Beat Saber Electric Blue (Right Hook / Right Side)
+    BLOCK_BASE: 0x0d1017,          // Solid matte dark obsidian architectural block
+    BLOCK_STRIPE_CYAN: 0x00f0ff,   // Wide cyan neon slab stripe
+    BLOCK_STRIPE_BLUE: 0x0077ff,   // Wide electric blue neon slab stripe
+    BLOCK_STRIPE_RED: 0xff0055,    // Wide crimson accent slab stripe
+    BLOCK_NEON_EDGE: 0x00f0ff,     // Legacy alias
+    BLOCK_NEON_ALT: 0x0077ff,      // Legacy alias
+    CITY_SILHOUETTE: 0x070a12,     // Minimalist background megacity building body
+    CITY_WINDOW_NEON: 0x00d8ff,    // Minimalist city vertical light strip
+    START_PAD_BASE: 0x0d1017,      // Dark obsidian start pad base
     START_PAD_NEON: 0x00ffcc,      // Cyber teal trim
-    FINISH_GATE: 0xfacc15,         // Neon gold finish ring
+    FINISH_GATE: 0x00f0ff,         // Accretion ring cyan
+    BLACKHOLE_CORE: 0x000000,      // Pitch black event horizon sphere
+    BLACKHOLE_HALO: 0x7b2cbf,      // Deep violet-blue gravitational lensing halo
+    BLACKHOLE_DISK: 0x00f0ff,      // Bright cyan-white accretion disk
     HAZARD_LAVA: 0xff5500,         // Bright Neon Orange Lava Tile
     HAZARD_GRID: 0xffaa00,         // Glowing yellow-orange lava tile border
     SPARK_WHITE: 0xd8f8ff,         // Bright white-cyan spark dust
-    // Legacy aliases for backward compatibility
-    STONE_PRIMARY: 0x10141f,
-    STONE_SECONDARY: 0x1a2234,
-    START_PAD: 0x00ffcc,
+    STONE_PRIMARY: 0x0d1017,       // Legacy alias
+    STONE_SECONDARY: 0x161c28,     // Legacy alias
+    START_PAD: 0x00ffcc,           // Legacy alias
   },
   FX: {
-    DEATH_DELAY_MS: 1150,          // Delay ms before showing DEAD modal after explosion
+    DEATH_DELAY_MS: 1150,          // Delay (ms) before showing DEAD modal after explosion
+    FINISHING_DELAY_MS: 1350,      // Delay (ms) while Black Hole implodes & explodes before WIN modal
     SHATTER_COUNT: 32,             // Number of red/blue shards when player explodes
-    SHATTER_DURATION: 1.15,        // Lifetime in s of shatter explosion shards
-    SHATTER_GRAVITY: 18.0,         // Downward acceleration m/s^2 on explosion shards
+    SHATTER_DURATION: 1.15,        // Lifetime (s) of shatter explosion shards
+    SHATTER_GRAVITY: 18.0,         // Downward acceleration (m/s^2) on explosion shards
     IMPACT_POOL_SIZE: 6,           // Number of pre-allocated dust burst emitters
     IMPACT_PARTICLE_COUNT: 18,     // Dust/spark particles spawned per grapple connect
-    IMPACT_DURATION: 0.38,         // Lifetime in s of grapple impact dust particles
+    IMPACT_DURATION: 0.38,         // Lifetime (s) of grapple impact dust particles
+    TRAIL_POINTS: 36,              // Number of nodes in each Tron light-wall ribbon
+  },
+  BLOOM: {
+    STRENGTH: 0.65,                // UnrealBloomPass bloom strength
+    RADIUS: 0.28,                  // UnrealBloomPass bloom radius (tight corona glow)
+    THRESHOLD: 0.82,               // Bloom luminance threshold (only bright emissives bloom)
   },
   COURSES: {
-    1: {
-      id: 1,
-      name: 'Skyline Sprint',
-      seed: 1042,
-      chunks: [1, 2, 3, 4, 5, 6],
-      authorTime: 22.0,
-      goldTime: 26.0,
-      silverTime: 32.0,
-      bronzeTime: 40.0,
-    },
-    2: {
-      id: 2,
-      name: 'Citadel Ascent',
-      seed: 8821,
-      chunks: [1, 2, 3, 4, 2, 5, 3, 6],
-      authorTime: 31.0,
-      goldTime: 36.0,
-      silverTime: 44.0,
-      bronzeTime: 55.0,
-    },
-    3: {
-      id: 3,
-      name: 'Hyperion Gauntlet',
-      seed: 9999,
-      chunks: [2, 5, 3, 4, 5, 2, 4, 5, 3, 6],
-      authorTime: 42.0,
-      goldTime: 49.0,
-      silverTime: 60.0,
-      bronzeTime: 75.0,
-    },
-    4: {
-      id: 4,
-      name: 'Endless Abyss',
-      seed: 0,
-      chunks: [],
-      isEndless: true,
-    },
-  },
+    1: { id: 1, name: 'Skyline Sprint', seed: 1042, chunks: [1, 2, 3, 4, 5, 6], authorTime: 22.0, goldTime: 26.0, silverTime: 32.0, bronzeTime: 40.0, isEndless: false },
+    2: { id: 2, name: 'Citadel Ascent', seed: 8821, chunks: [1, 3, 2, 4, 3, 5, 2, 6], authorTime: 31.0, goldTime: 36.0, silverTime: 44.0, bronzeTime: 55.0, isEndless: false },
+    3: { id: 3, name: 'Hyperion Gauntlet', seed: 9999, chunks: [2, 5, 3, 4, 5, 2, 4, 5, 3, 6], authorTime: 42.0, goldTime: 49.0, silverTime: 60.0, bronzeTime: 75.0, isEndless: false },
+    4: { id: 4, name: 'Endless Abyss', seed: 0, chunks: [], isEndless: true }
+  }
 };
 
-// Course array helper for iteration
-const COURSE_ARRAY = [
-  CONFIG.COURSES[1],
-  CONFIG.COURSES[2],
-  CONFIG.COURSES[3],
-  CONFIG.COURSES[4],
-];
+/**
+ * Helper to retrieve an ordered list of courses from CONFIG.COURSES.
+ * Collects all enumerable course objects (sorted by numeric key if present).
+ * Returns a defensive copy to prevent callers from corrupting the internal collection.
+ *
+ * @param {object} [target]
+ * @returns {Array<object>}
+ */
+function getCourseList(target = CONFIG.COURSES) {
+  const source = target && typeof target === 'object' ? target : CONFIG.COURSES;
+  return Object.keys(source)
+    .sort((a, b) => {
+      const numA = Number(a);
+      const numB = Number(b);
+      if (!isNaN(numA) && !isNaN(numB)) {
+        return numA - numB;
+      }
+      return String(a).localeCompare(String(b));
+    })
+    .map((k) => source[k]);
+}
 
 // Attach non-enumerable helpers to CONFIG.COURSES for ergonomics and compatibility
 Object.defineProperties(CONFIG.COURSES, {
   [Symbol.iterator]: {
     enumerable: false,
+    configurable: true,
+    writable: true,
     value: function* () {
-      yield* COURSE_ARRAY;
+      yield* getCourseList(this);
     },
   },
   find: {
     enumerable: false,
-    value: function (predicate) {
-      return COURSE_ARRAY.find(predicate);
+    configurable: true,
+    writable: true,
+    value: function (predicate, thisArg) {
+      return getCourseList(this).find(predicate, thisArg);
     },
   },
   filter: {
     enumerable: false,
-    value: function (predicate) {
-      return COURSE_ARRAY.filter(predicate);
+    configurable: true,
+    writable: true,
+    value: function (predicate, thisArg) {
+      return getCourseList(this).filter(predicate, thisArg);
     },
   },
   map: {
     enumerable: false,
-    value: function (callback) {
-      return COURSE_ARRAY.map(callback);
+    configurable: true,
+    writable: true,
+    value: function (callback, thisArg) {
+      return getCourseList(this).map(callback, thisArg);
     },
   },
   forEach: {
     enumerable: false,
-    value: function (callback) {
-      COURSE_ARRAY.forEach(callback);
+    configurable: true,
+    writable: true,
+    value: function (callback, thisArg) {
+      getCourseList(this).forEach(callback, thisArg);
     },
   },
   some: {
     enumerable: false,
-    value: function (predicate) {
-      return COURSE_ARRAY.some(predicate);
+    configurable: true,
+    writable: true,
+    value: function (predicate, thisArg) {
+      return getCourseList(this).some(predicate, thisArg);
     },
   },
   list: {
     enumerable: false,
+    configurable: true,
     get: function () {
-      return COURSE_ARRAY;
+      return getCourseList(this);
     },
   },
 });
@@ -180,6 +188,7 @@ export const {
   LEVEL,
   COLORS,
   FX,
+  BLOOM,
   COURSES,
 } = CONFIG;
 

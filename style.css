@@ -7,13 +7,17 @@
   --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   /* Color Palette */
-  --bg-dark: #080c16;
-  --panel-bg: rgba(13, 20, 36, 0.72);
-  --panel-border: rgba(255, 255, 255, 0.08);
-  --panel-border-glow: rgba(0, 240, 255, 0.25);
+  --bg-dark: #040711;
+  --panel-bg: rgba(4, 7, 17, 0.82);
+  --panel-border: rgba(0, 240, 255, 0.28);
+  --panel-border-glow: rgba(0, 170, 255, 0.15);
   
   --cyan-hook: #00f0ff;
   --cyan-glow: rgba(0, 240, 255, 0.6);
+  --red-hook: #ff0044;
+  --red-glow: rgba(255, 0, 68, 0.7);
+  --blue-hook: #00aaff;
+  --blue-glow: rgba(0, 170, 255, 0.7);
   --orange-hook: #ff6b00;
   --orange-glow: rgba(255, 107, 0, 0.6);
   
@@ -127,10 +131,11 @@ html, body {
 .course-selector {
   display: flex;
   gap: 0.4rem;
-  background: var(--panel-bg);
+  background: rgba(4, 7, 17, 0.82);
   padding: 0.25rem;
   border-radius: 8px;
-  border: 1px solid var(--panel-border);
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  box-shadow: 0 0 18px rgba(0, 170, 255, 0.15);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -250,13 +255,13 @@ html, body {
 }
 
 .timer-wrapper {
-  background: var(--panel-bg);
+  background: rgba(4, 7, 17, 0.82);
   padding: 0.4rem 1.6rem;
   border-radius: 10px;
-  border: 1px solid var(--panel-border);
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  box-shadow: 0 0 18px rgba(0, 170, 255, 0.15);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
 .timer-text {
@@ -315,10 +320,11 @@ html, body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--panel-bg);
+  background: rgba(4, 7, 17, 0.82);
   padding: 0.4rem 0.85rem;
   border-radius: 6px;
-  border: 1px solid var(--panel-border);
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  box-shadow: 0 0 18px rgba(0, 170, 255, 0.15);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -380,18 +386,20 @@ html, body {
   filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.6));
 }
 
-/* Left Hook Active Glow (Cyan) */
-.bracket-left.active {
-  color: var(--cyan-hook);
-  transform: translateY(-50%) scale(1.22);
-  filter: drop-shadow(0 0 10px var(--cyan-glow));
+/* Left Hook Active Glow (Beat Saber Crimson Red #ff0044) */
+#bracket-left.active, .bracket-left.active {
+  color: #ff0044;
+  text-shadow: 0 0 14px #ff0044, 0 0 28px #ff0044;
+  transform: translateY(-50%) translateX(-4px) scale(1.18);
+  filter: drop-shadow(0 0 14px #ff0044);
 }
 
-/* Right Hook Active Glow (Orange) */
-.bracket-right.active {
-  color: var(--orange-hook);
-  transform: translateY(-50%) scale(1.22);
-  filter: drop-shadow(0 0 10px var(--orange-glow));
+/* Right Hook Active Glow (Beat Saber Electric Blue #00aaff) */
+#bracket-right.active, .bracket-right.active {
+  color: #00aaff;
+  text-shadow: 0 0 14px #00aaff, 0 0 28px #00aaff;
+  transform: translateY(-50%) translateX(4px) scale(1.18);
+  filter: drop-shadow(0 0 14px #00aaff);
 }
 
 /* Central Reticle Dot */
@@ -454,15 +462,15 @@ html, body {
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  background: var(--panel-bg);
+  background: rgba(4, 7, 17, 0.82);
   padding: 0.75rem 2rem 0.9rem;
   border-radius: 12px;
-  border: 1px solid var(--panel-border);
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  box-shadow: 0 0 18px rgba(0, 170, 255, 0.15);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   width: 380px;
   max-width: 90vw;
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.5);
 }
 
 .speedometer-readouts {
@@ -511,21 +519,19 @@ html, body {
 .speed-bar-fill {
   height: 100%;
   width: 0%;
-  background: var(--cyan-hook);
-  box-shadow: 0 0 10px var(--cyan-hook);
+  background: linear-gradient(90deg, #ff0044 0%, #00f0ff 50%, #00aaff 100%) !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.5);
   border-radius: 4px;
-  transition: width 0.06s linear, background-color 0.2s ease, box-shadow 0.2s ease;
+  transition: width 0.06s linear;
 }
 
-/* Speed Bar Dynamic Color Shifts */
+/* Speed Bar Dynamic Overdrive Glow */
 .speed-bar-fill.mid-speed {
-  background: var(--gold-medal);
-  box-shadow: 0 0 12px var(--gold-medal);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.8);
 }
 
 .speed-bar-fill.overdrive {
-  background: var(--magenta-overdrive);
-  box-shadow: 0 0 16px var(--magenta-overdrive);
+  box-shadow: 0 0 22px rgba(255, 0, 127, 0.9);
   animation: overdrive-pulse 0.4s infinite alternate ease-in-out;
 }
 
@@ -574,11 +580,11 @@ html, body {
 .overlay-card {
   width: 540px;
   max-width: 92vw;
-  background: rgba(13, 20, 36, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(4, 7, 17, 0.82);
+  border: 1px solid rgba(0, 240, 255, 0.28);
   border-radius: 18px;
   padding: 2.75rem 2.25rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(0, 240, 255, 0.1);
+  box-shadow: 0 0 18px rgba(0, 170, 255, 0.15), 0 20px 60px rgba(0, 0, 0, 0.7);
   text-align: center;
   position: relative;
   overflow: hidden;

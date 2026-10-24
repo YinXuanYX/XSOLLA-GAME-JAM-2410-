@@ -88,7 +88,8 @@ assert(levelGen.startPad.bodies.length > 0, 'Start Pad collision body created');
 assert(levelGen.startPad.bodies[0].userData.type === 'START_PAD', 'Start Pad body tagged START_PAD');
 
 const finishGate = levelGen.spawnFinishGate(0, 10, -500);
-assert(finishGate.radius === 16, 'Finish Gate has 16m radius');
+assert(finishGate.radius === 18, 'Black Hole has 18m capture radius');
+assert(finishGate.exploding === false && finishGate.explodeTimer === 0, 'Black Hole starts idle');
 assert(finishGate.z === -500, 'Finish Gate at Z = -500');
 assert(finishGate.mesh !== null, 'Finish Gate group attached');
 

@@ -39,8 +39,8 @@ export class GrapplePhysics {
     this._zeroVec = new CANNON.Vec3(0, 0, 0);
 
     // Hook channel configuration
-    const leftColor = CONFIG.COLORS?.HOOK_LEFT ?? 0x00f0ff;
-    const rightColor = CONFIG.COLORS?.HOOK_RIGHT ?? 0xff6b00;
+    const leftColor = CONFIG.COLORS?.HOOK_LEFT ?? 0xff0044;
+    const rightColor = CONFIG.COLORS?.HOOK_RIGHT ?? 0x00aaff;
     const ropeRadius = CONFIG.GRAPPLE?.ROPE_RADIUS ?? 0.045;
 
     // Initialize hook channel states
@@ -117,6 +117,9 @@ export class GrapplePhysics {
       opacity: 0.8,
       side: THREE.DoubleSide,
       depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2,
     });
     this.previewRing = new THREE.Mesh(ringGeo, ringMat);
     this.previewRing.name = 'GrapplePreviewRing';
@@ -494,11 +497,11 @@ export class GrapplePhysics {
           const ny = (typeof rawNorm?.y === 'number' && Number.isFinite(rawNorm.y)) ? rawNorm.y : 1;
           const nz = (typeof rawNorm?.z === 'number' && Number.isFinite(rawNorm.z)) ? rawNorm.z : 0;
 
-          // Position slightly offset along surface normal to eliminate Z-fighting
+          // Position slightly offset along surface normal (+0.06m) to eliminate Z-fighting
           this.previewRing.position.set(
-            px + nx * 0.02,
-            py + ny * 0.02,
-            pz + nz * 0.02
+            px + nx * 0.06,
+            py + ny * 0.06,
+            pz + nz * 0.06
           );
 
           // Align ring normal (RingGeometry is built on XY plane, normal along +Z) with surface normal

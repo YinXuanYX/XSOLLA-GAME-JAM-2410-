@@ -289,10 +289,10 @@ const hitInfo1 = {
 grapple.updateVisuals(hitInfo1);
 
 assert(grapple.previewRing.visible === true, 'Preview ring is visible on valid hit');
-// Position offset by normal * 0.02
+// Position offset by normal * 0.06 (V2.0 Z-fighting prevention)
 assertClose(grapple.previewRing.position.x, 5.0, 0.001, 'Preview ring X matches hit point X');
 assertClose(grapple.previewRing.position.y, 12.0, 0.001, 'Preview ring Y matches hit point Y');
-assertClose(grapple.previewRing.position.z, -40 + 0.02, 0.001, 'Preview ring Z offset by +0.02 normal');
+assertClose(grapple.previewRing.position.z, -40 + 0.06, 0.001, 'Preview ring Z offset by +0.06 normal');
 
 // Ring normal check: (0, 0, 1) rotated by quaternion should align with normal (0, 0, 1)
 const rotatedNormal1 = new THREE.Vector3(0, 0, 1).applyQuaternion(grapple.previewRing.quaternion);
@@ -307,7 +307,7 @@ const hitInfo2 = {
   normal: new THREE.Vector3(0, 1, 0),
 };
 grapple.updateVisuals(hitInfo2);
-assertClose(grapple.previewRing.position.y, -2 + 0.02, 0.001, 'Preview ring Y offset by +0.02 along +Y normal');
+assertClose(grapple.previewRing.position.y, -2 + 0.06, 0.001, 'Preview ring Y offset by +0.06 along +Y normal');
 const rotatedNormal2 = new THREE.Vector3(0, 0, 1).applyQuaternion(grapple.previewRing.quaternion);
 assertClose(rotatedNormal2.x, 0, 0.01, 'Ring normal rotated to +Y: X is 0');
 assertClose(rotatedNormal2.y, 1.0, 0.01, 'Ring normal rotated to +Y: Y is 1.0');

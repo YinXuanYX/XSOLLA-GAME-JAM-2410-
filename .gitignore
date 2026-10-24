@@ -3,3 +3,9 @@ dist/
 *.log
 .DS_Store
 Thumbs.db
+
+# Agent skills and configurations
+.agents/
+.claude/
+agent/
+skills-lock.json

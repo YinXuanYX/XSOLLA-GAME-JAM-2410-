@@ -288,6 +288,126 @@ export class AudioSynth {
   }
 
   /**
+   * Plays the black hole finale: 0.35s rising vacuum charge, a sub-bass supernova boom,
+   * and a crystalline victory chord.
+   */
+  playBlackHoleExplosion() {
+    if (!this.ctx || this.isMuted) return;
+    this.init();
+
+    const now = this.ctx.currentTime;
+    const chargeEnd = now + 0.35;
+    const boomDuration = 1.0;
+
+    const makeNoise = (seconds) => {
+      const size = Math.ceil(this.ctx.sampleRate * seconds);
+      const buffer = this.ctx.createBuffer(1, size, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
+      const source = this.ctx.createBufferSource();
+      source.buffer = buffer;
+      return source;
+    };
+
+    // 1. Gravitational vacuum charge (0.0s - 0.35s)
+    const chargeOsc = this.ctx.createOscillator();
+    chargeOsc.type = 'sawtooth';
+    chargeOsc.frequency.setValueAtTime(40, now);
+    chargeOsc.frequency.exponentialRampToValueAtTime(520, chargeEnd);
+
+    const chargeFilter = this.ctx.createBiquadFilter();
+    chargeFilter.type = 'lowpass';
+    chargeFilter.Q.setValueAtTime(6, now);
+    chargeFilter.frequency.setValueAtTime(120, now);
+    chargeFilter.frequency.exponentialRampToValueAtTime(2400, chargeEnd);
+
+    const chargeGain = this.ctx.createGain();
+    chargeGain.gain.setValueAtTime(0.001, now);
+    chargeGain.gain.exponentialRampToValueAtTime(0.30, chargeEnd - 0.02);
+    chargeGain.gain.exponentialRampToValueAtTime(0.001, chargeEnd + 0.03);
+
+    chargeOsc.connect(chargeFilter);
+    chargeFilter.connect(chargeGain);
+    chargeGain.connect(this.masterGain);
+    chargeOsc.start(now);
+    chargeOsc.stop(chargeEnd + 0.04);
+
+    const swell = makeNoise(0.4);
+    const swellFilter = this.ctx.createBiquadFilter();
+    swellFilter.type = 'bandpass';
+    swellFilter.Q.setValueAtTime(2, now);
+    swellFilter.frequency.setValueAtTime(200, now);
+    swellFilter.frequency.exponentialRampToValueAtTime(3200, chargeEnd);
+
+    const swellGain = this.ctx.createGain();
+    swellGain.gain.setValueAtTime(0.001, now);
+    swellGain.gain.exponentialRampToValueAtTime(0.22, chargeEnd - 0.02);
+    swellGain.gain.exponentialRampToValueAtTime(0.001, chargeEnd + 0.03);
+
+    swell.connect(swellFilter);
+    swellFilter.connect(swellGain);
+    swellGain.connect(this.masterGain);
+    swell.start(now);
+    swell.stop(chargeEnd + 0.04);
+
+    // 2. Supernova sub-bass boom (starts at 0.35s)
+    const boomOsc = this.ctx.createOscillator();
+    boomOsc.type = 'sine';
+    boomOsc.frequency.setValueAtTime(90, chargeEnd);
+    boomOsc.frequency.exponentialRampToValueAtTime(28, chargeEnd + boomDuration);
+
+    const boomGain = this.ctx.createGain();
+    boomGain.gain.setValueAtTime(0.001, chargeEnd);
+    boomGain.gain.linearRampToValueAtTime(0.55, chargeEnd + 0.02);
+    boomGain.gain.exponentialRampToValueAtTime(0.001, chargeEnd + boomDuration);
+
+    boomOsc.connect(boomGain);
+    boomGain.connect(this.masterGain);
+    boomOsc.start(chargeEnd);
+    boomOsc.stop(chargeEnd + boomDuration + 0.02);
+
+    const boomNoise = makeNoise(boomDuration + 0.05);
+    const boomNoiseFilter = this.ctx.createBiquadFilter();
+    boomNoiseFilter.type = 'lowpass';
+    boomNoiseFilter.Q.setValueAtTime(4, chargeEnd);
+    boomNoiseFilter.frequency.setValueAtTime(900, chargeEnd);
+    boomNoiseFilter.frequency.exponentialRampToValueAtTime(60, chargeEnd + boomDuration);
+
+    const boomNoiseGain = this.ctx.createGain();
+    boomNoiseGain.gain.setValueAtTime(0.001, chargeEnd);
+    boomNoiseGain.gain.linearRampToValueAtTime(0.40, chargeEnd + 0.015);
+    boomNoiseGain.gain.exponentialRampToValueAtTime(0.001, chargeEnd + boomDuration);
+
+    boomNoise.connect(boomNoiseFilter);
+    boomNoiseFilter.connect(boomNoiseGain);
+    boomNoiseGain.connect(this.masterGain);
+    boomNoise.start(chargeEnd);
+    boomNoise.stop(chargeEnd + boomDuration + 0.05);
+
+    // 3. Crystalline victory chord (starts at ~0.45s after the boom)
+    const chordNotes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+    const chordStart = chargeEnd + 0.10;
+    const chordDuration = 1.2;
+
+    chordNotes.forEach((freq, idx) => {
+      const startTime = chordStart + idx * 0.045;
+      const osc = this.ctx.createOscillator();
+      osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+      osc.frequency.setValueAtTime(freq, startTime);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.001, startTime);
+      gain.gain.linearRampToValueAtTime(0.11, startTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + chordDuration);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(startTime);
+      osc.stop(startTime + chordDuration + 0.02);
+    });
+  }
+
+  /**
    * Plays the sub-bass sawtooth void death drop: 160Hz -> 35Hz over 400ms.
    */
   playDeath() {

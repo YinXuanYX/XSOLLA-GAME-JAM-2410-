@@ -99,23 +99,10 @@ export class UIManager {
    * Initializes the radial speed-lines streaming canvas effect.
    */
   initSpeedLines() {
-    if (typeof document === 'undefined') return;
-
-    this.speedCanvas = document.getElementById('speed-lines');
-    if (!this.speedCanvas) return;
-
-    this.speedCtx = this.speedCanvas.getContext('2d');
     this.speedLines = [];
     const numLines = 55;
 
-    this.resizeCanvas = () => {
-      this.speedCanvas.width = window.innerWidth;
-      this.speedCanvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', this.resizeCanvas);
-    this.resizeCanvas();
-
-    // Create randomized radial particles
+    // Create randomized radial particles with alternating Red, Cyan, Blue colors
     for (let i = 0; i < numLines; i++) {
       this.speedLines.push({
         angle: Math.random() * Math.PI * 2,
@@ -124,12 +111,28 @@ export class UIManager {
         speed: 0.015 + Math.random() * 0.035,
         alpha: 0.2 + Math.random() * 0.8,
         width: 1.0 + Math.random() * 2.2,
+        colorIndex: i % 3,
       });
     }
+
+    if (typeof document === 'undefined') return;
+
+    this.speedCanvas = document.getElementById('speed-lines');
+    if (!this.speedCanvas) return;
+
+    this.speedCtx = this.speedCanvas.getContext('2d');
+
+    this.resizeCanvas = () => {
+      this.speedCanvas.width = window.innerWidth;
+      this.speedCanvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', this.resizeCanvas);
+    this.resizeCanvas();
   }
 
   /**
    * Renders radiating speed streaks on canvas when player exceeds 40 m/s.
+   * Streaks alternate between subtle neon Red, Cyan, and Blue.
    * Opacity smoothly transitions from 0.0 at 40 m/s to 0.75 at 75 m/s.
    *
    * @param {number} speed Velocity magnitude in m/s
@@ -154,6 +157,12 @@ export class UIManager {
     this.speedCtx.save();
     this.speedCtx.lineCap = 'round';
 
+    const colors = [
+      '255, 0, 68',   // Subtle neon Red (Beat Saber Crimson)
+      '0, 240, 255',  // Subtle neon Cyan (Tron Cyan)
+      '0, 170, 255',  // Subtle neon Blue (Beat Saber Electric Blue)
+    ];
+
     for (const line of this.speedLines) {
       // Advance distance along streak trajectory
       line.dist += line.speed * (1.0 + intensity * 2.5);
@@ -171,7 +180,8 @@ export class UIManager {
       const y2 = centerY + Math.sin(line.angle) * r2;
 
       const alpha = line.alpha * intensity * 0.75;
-      this.speedCtx.strokeStyle = `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
+      const rgb = colors[line.colorIndex % 3];
+      this.speedCtx.strokeStyle = `rgba(${rgb}, ${alpha.toFixed(3)})`;
       this.speedCtx.lineWidth = line.width;
 
       this.speedCtx.beginPath();
@@ -335,6 +345,7 @@ export class UIManager {
    * @param {number} [state.speed=0] Velocity magnitude in m/s
    * @param {boolean} [state.leftActive=false] Left hook pulling state
    * @param {boolean} [state.rightActive=false] Right hook pulling state
+   * @param {Object} [state.hooks=null] Optional direct reference to { left: { active }, right: { active } }
    * @param {Object|null} [state.targetInfo=null] Reticle raycast info: { hit, distance, assisted }
    * @param {number} [state.elapsedTime=0] Time in seconds
    * @param {number} [state.courseId=1] Current course preset
@@ -345,6 +356,7 @@ export class UIManager {
     speed = 0,
     leftActive = false,
     rightActive = false,
+    hooks = null,
     targetInfo = null,
     elapsedTime = 0,
     courseId = this.currentCourseId,
@@ -364,12 +376,15 @@ export class UIManager {
       this.dom.sessionStatus.textContent = sessionStatus;
     }
 
-    // 2. Reticle Hook Brackets (Cyan left, Orange right)
+    // 2. Reticle Hook Brackets (Beat Saber Crimson Red left, Electric Blue right)
+    const isLeft = Boolean(hooks?.left?.active ?? leftActive);
+    const isRight = Boolean(hooks?.right?.active ?? rightActive);
+
     if (this.dom.bracketLeft && this.dom.bracketLeft.classList) {
-      this.dom.bracketLeft.classList.toggle('active', leftActive);
+      this.dom.bracketLeft.classList.toggle('active', isLeft);
     }
     if (this.dom.bracketRight && this.dom.bracketRight.classList) {
-      this.dom.bracketRight.classList.toggle('active', rightActive);
+      this.dom.bracketRight.classList.toggle('active', isRight);
     }
 
     // 3. Reticle Dot & Range Readout
