@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AERO-HOOK // Dual-Hook Momentum Time-Trial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700;800&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <!-- 3D Canvas Container -->
+  <div id="game-container"></div>
+
+  <!-- Radial Speed Lines Overlay -->
+  <canvas id="speed-lines"></canvas>
+
+  <!-- Heads-Up Display (HUD) -->
+  <div id="hud">
+    <!-- Top Bar: Course Selector, Restart Hint, Controls -->
+    <header class="hud-top-bar">
+      <div class="hud-left-panel">
+        <div class="game-logo">AERO<span class="logo-accent">-HOOK</span></div>
+        <nav class="course-selector" id="course-selector">
+          <button class="course-pill active" data-course="1" id="pill-course-1">
+            <span class="pill-key">1</span>
+            <span class="pill-name">Sprint</span>
+          </button>
+          <button class="course-pill" data-course="2" id="pill-course-2">
+            <span class="pill-key">2</span>
+            <span class="pill-name">Citadel</span>
+          </button>
+          <button class="course-pill" data-course="3" id="pill-course-3">
+            <span class="pill-key">3</span>
+            <span class="pill-name">Gauntlet</span>
+          </button>
+          <button class="course-pill" data-course="4" id="pill-course-4">
+            <span class="pill-key">4</span>
+            <span class="pill-name">Endless</span>
+          </button>
+        </nav>
+        <div class="quick-hints">
+          <span class="key-tag">[R]</span>
+          <span class="hint-label">Quick Restart</span>
+        </div>
+        <div class="controls-legend">
+          <span class="legend-item"><span class="mouse-icon lmb">LMB</span> Left Hook</span>
+          <span class="legend-sep">|</span>
+          <span class="legend-item"><span class="mouse-icon rmb">RMB</span> Right Hook</span>
+          <span class="legend-sep">|</span>
+          <span class="legend-item"><span class="key-badge">WASD</span> Air Nudge</span>
+        </div>
+      </div>
+
+      <!-- Top Center: Timer, Personal Best, Medal Splits -->
+      <div class="hud-center-panel">
+        <div class="timer-wrapper">
+          <div id="timer-display" class="timer-text">00:00.000</div>
+        </div>
+        <div class="timer-sub-row">
+          <div id="pb-display" class="pb-text">PB: --:--.---</div>
+          <div id="medal-targets" class="medal-targets">
+            <span class="medal-target author" title="Author Target">💎 22.00s</span>
+            <span class="medal-target gold" title="Gold Target">🥇 26.00s</span>
+            <span class="medal-target silver" title="Silver Target">🥈 32.00s</span>
+            <span class="medal-target bronze" title="Bronze Target">🥉 40.00s</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Right: Audio / Status Indicator -->
+      <div class="hud-right-panel">
+        <div class="status-indicator">
+          <span class="pulse-dot"></span>
+          <span id="session-status" class="status-text">READY</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Center Dynamic Crosshair Reticle -->
+    <div id="crosshair" class="crosshair-container">
+      <div id="bracket-left" class="reticle-bracket bracket-left" aria-label="Left Hook Reticle">
+        <svg viewBox="0 0 24 48" class="bracket-svg">
+          <path d="M 18,4 C 8,14 8,34 18,44" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+        </svg>
+      </div>
+      <div id="reticle-dot" class="reticle-dot"></div>
+      <div id="bracket-right" class="reticle-bracket bracket-right" aria-label="Right Hook Reticle">
+        <svg viewBox="0 0 24 48" class="bracket-svg">
+          <path d="M 6,4 C 16,14 16,34 6,44" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+        </svg>
+      </div>
+      <div id="range-readout" class="range-readout">---</div>
+    </div>
+
+    <!-- Bottom Center Speedometer -->
+    <footer class="hud-bottom-bar">
+      <div class="speedometer-container">
+        <div class="speedometer-readouts">
+          <div class="speed-main">
+            <span id="speed-value" class="speed-number">00</span>
+            <span class="speed-unit">M/S</span>
+          </div>
+          <div class="speed-sub">
+            <span id="speed-kmh" class="speed-kmh-text">0 KM/H</span>
+          </div>
+        </div>
+        <div class="speed-bar-track">
+          <div id="speed-bar-fill" class="speed-bar-fill" style="width: 0%;"></div>
+          <div class="speed-bar-marker marker-40" title="High Speed"></div>
+          <div class="speed-bar-marker marker-55" title="Overdrive"></div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal Overlays (Menu, Void Death, Course Clear) -->
+  <div id="overlay-screen" class="overlay-container">
+    <div class="overlay-card glass-panel" id="modal-card">
+      <!-- Title Menu Screen -->
+      <div class="overlay-view" id="view-menu">
+        <div class="title-badge">HIGH-SPEED MOMENTUM PARKOUR</div>
+        <h1 class="main-title">AERO<span class="title-accent">-HOOK</span></h1>
+        <p class="subtitle">Linear Dual Winches // Conserved Momentum // Brutalist Void Skyway</p>
+        
+        <div class="rule-callouts">
+          <div class="rule-chip">🚫 No Jumping</div>
+          <div class="rule-chip">⚡ 100% Momentum Conserved</div>
+          <div class="rule-chip">🔥 Floor is Lava</div>
+        </div>
+
+        <button class="primary-btn pulse-glow" id="btn-play">
+          <span class="btn-icon">▶</span>
+          <span class="btn-label">LAUNCH COURSE</span>
+        </button>
+
+        <div class="menu-footer-hint">Click anywhere or press [ENTER] to lock pointer and begin</div>
+      </div>
+
+      <!-- Void Death Screen -->
+      <div class="overlay-view hidden" id="view-death">
+        <div class="alert-icon-wrap death-glow">
+          <span class="alert-symbol">☠</span>
+        </div>
+        <h2 class="alert-title text-crimson">VOID FALL</h2>
+        <p class="alert-subtitle">The abyss swallowed your momentum.</p>
+        
+        <div class="death-stats">
+          <div class="stat-box">
+            <span class="stat-label">SPLIT TIME</span>
+            <span id="death-split-time" class="stat-val font-mono">00:00.000</span>
+          </div>
+        </div>
+
+        <button class="primary-btn retry-btn" id="btn-retry">
+          <span class="btn-icon">↺</span>
+          <span class="btn-label">QUICK RETRY [R]</span>
+        </button>
+      </div>
+
+      <!-- Course Clear Screen -->
+      <div class="overlay-view hidden" id="view-clear">
+        <div class="clear-medal-emblem" id="clear-medal-emblem">🥇</div>
+        <div class="clear-course-name" id="clear-course-name">SKYLINE SPRINT</div>
+        <h2 class="alert-title text-gold" id="clear-title">COURSE CLEAR!</h2>
+
+        <div class="clear-stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">FINAL TIME</span>
+            <span id="clear-time" class="stat-val-large font-mono">00:23.410</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">PERSONAL BEST DELTA</span>
+            <span id="clear-pb-delta" class="stat-val font-mono text-green">-0.590s (NEW PB!)</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">MEDAL AWARDED</span>
+            <span id="clear-medal-name" class="stat-val font-bold text-gold">GOLD MEDAL</span>
+          </div>
+        </div>
+
+        <div class="clear-actions">
+          <button class="primary-btn retry-btn" id="btn-clear-retry">
+            <span class="btn-icon">↺</span>
+            <span class="btn-label">RETRY COURSE [R]</span>
+          </button>
+          <button class="secondary-btn" id="btn-next-course">
+            <span class="btn-label">NEXT COURSE [2]</span>
+            <span class="btn-icon">→</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
