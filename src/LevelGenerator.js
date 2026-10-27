@@ -74,6 +74,7 @@ export class LevelGenerator {
     this.bhDisk2 = null;
     this.bhParticles = [];
     this.bhShockwave = null;
+    this.bhGrappleSphere = null;
     this.bhCoreMaterial = null;
     this.bhParticleGeo = null;
     this.bhParticleMaterials = [];
@@ -188,14 +189,14 @@ export class LevelGenerator {
       hazardApproach: hazardApproachMat,
       safeApproach: emissiveCyanMat,
       startPadBase: new THREE.MeshStandardMaterial({
-        color: CONFIG.COLORS.START_PAD_BASE ?? 0x10141f,
-        roughness: 0.28,
-        metalness: 0.82,
+        color: 0x070a12,
+        roughness: 0.8,
+        metalness: 0.2,
       }),
       startPadNeon: new THREE.MeshStandardMaterial({
-        color: 0x00f0ff,
-        emissive: 0x00f0ff,
-        emissiveIntensity: 2.8,
+        color: 0x006688,
+        transparent: true,
+        opacity: 0.55,
         polygonOffset: true,
         polygonOffsetFactor: -1.0,
         polygonOffsetUnits: -1.0,
@@ -1141,23 +1142,23 @@ export class LevelGenerator {
     baseMesh.castShadow = true;
     baseMesh.receiveShadow = true;
 
-    // Edge wireframe in cyber teal
+    // Edge wireframe in dark-teal
     const edgeLines = new THREE.LineSegments(
       new THREE.EdgesGeometry(baseGeo),
-      new THREE.LineBasicMaterial({ color: CONFIG.COLORS.START_PAD_NEON ?? 0x00ffcc })
+      new THREE.LineBasicMaterial({ color: 0x006688, transparent: true, opacity: 0.55 })
     );
     edgeLines.raycast = NO_RAYCAST;
     baseMesh.add(edgeLines);
     this.startPad.edgeLines = edgeLines;
 
-    // 2. Separate Top Neon Ring at y = +0.05m (5cm above top face to eliminate Z-fighting!)
-    const trimGeo = new THREE.RingGeometry(5.8, 6.8, 8);
+    // 2. Separate Top Neon Ring at y = +0.05m (ultra-thin 0.08m wide recessed dark-teal circuit lines)
+    const trimGeo = new THREE.RingGeometry(6.72, 6.80, 8);
     trimGeo.rotateX(-Math.PI / 2);
     const trimMesh = new THREE.Mesh(trimGeo, this.materials.startPadNeon);
     trimMesh.position.set(0, 0.05, 0);
 
-    // Center chevron ring marker at y = +0.05m
-    const markerGeo = new THREE.RingGeometry(1.8, 2.6, 8);
+    // Center chevron ring marker at y = +0.05m (ultra-thin 0.08m width)
+    const markerGeo = new THREE.RingGeometry(2.22, 2.30, 8);
     markerGeo.rotateX(-Math.PI / 2);
     const markerMesh = new THREE.Mesh(markerGeo, this.materials.startPadNeon);
     markerMesh.position.set(0, 0.05, 0);
@@ -1357,14 +1358,16 @@ export class LevelGenerator {
     const group = new THREE.Group();
     group.position.set(x, y, z);
 
-    // Event horizon: pitch-black singularity core
+    // Event horizon: pitch-black singularity core (Grappleable)
     this.bhCore = new THREE.Mesh(
       new THREE.SphereGeometry(7.5, 24, 24),
       new THREE.MeshBasicMaterial({ color: 0x000000, toneMapped: false })
     );
+    this.bhCore.userData = { type: 'GRAPPLEABLE', isGrappleable: true, noCameraClip: true };
     group.add(this.bhCore);
+    this.grappleableMeshes.push(this.bhCore);
 
-    // Gravitational photon shell
+    // Gravitational photon shell (Grappleable)
     this.bhHalo = new THREE.Mesh(
       new THREE.SphereGeometry(8.1, 24, 24),
       new THREE.MeshBasicMaterial({
@@ -1376,9 +1379,11 @@ export class LevelGenerator {
         depthWrite: false,
       })
     );
+    this.bhHalo.userData = { type: 'GRAPPLEABLE', isGrappleable: true, noCameraClip: true };
     group.add(this.bhHalo);
+    this.grappleableMeshes.push(this.bhHalo);
 
-    // Primary accretion disk with angular brightness variation so its spin reads visually
+    // Primary accretion disk with angular brightness variation so its spin reads visually (Grappleable)
     const diskGeo = new THREE.RingGeometry(9.5, 19.5, 32, 4);
     const diskPos = diskGeo.attributes.position;
     const diskColors = new Float32Array(diskPos.count * 3);
@@ -1407,9 +1412,25 @@ export class LevelGenerator {
       })
     );
     this.bhDisk1.rotation.set(Math.PI * 0.32, 0.2, 0);
+    this.bhDisk1.userData = { type: 'GRAPPLEABLE', isGrappleable: true, noCameraClip: true };
     group.add(this.bhDisk1);
+    this.grappleableMeshes.push(this.bhDisk1);
 
-    // Secondary relativistic jet ring
+    // Full-coverage grapple capture sphere (radius 22m) so shooting anywhere at the black hole latches on
+    const bhGrappleGeo = new THREE.SphereGeometry(22.0, 16, 16);
+    const bhGrappleMat = new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0.0,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    this.bhGrappleSphere = new THREE.Mesh(bhGrappleGeo, bhGrappleMat);
+    this.bhGrappleSphere.name = 'BlackHoleGrappleVolume';
+    this.bhGrappleSphere.userData = { type: 'GRAPPLEABLE', isGrappleable: true, noCameraClip: true };
+    group.add(this.bhGrappleSphere);
+    this.grappleableMeshes.push(this.bhGrappleSphere);
+
+    // Secondary relativistic jet ring (Grappleable)
     this.bhDisk2 = new THREE.Mesh(
       new THREE.TorusGeometry(11.5, 0.9, 8, 32),
       new THREE.MeshBasicMaterial({
@@ -1421,7 +1442,9 @@ export class LevelGenerator {
       })
     );
     this.bhDisk2.rotation.set(-Math.PI * 0.25, 0, Math.PI * 0.4);
+    this.bhDisk2.userData = { type: 'GRAPPLEABLE', isGrappleable: true, noCameraClip: true };
     group.add(this.bhDisk2);
+    this.grappleableMeshes.push(this.bhDisk2);
 
     // Swirling vortex particles
     const shardGeo = new THREE.OctahedronGeometry(0.7, 0);
@@ -1456,6 +1479,7 @@ export class LevelGenerator {
     this.bhDetonated = false;
     this.bhFinished = false;
     this.blackHoleGroup = group;
+    group.updateMatrixWorld(true);
     this.scene.add(group);
 
     this.finishGate = {
@@ -1466,6 +1490,7 @@ export class LevelGenerator {
       mesh: group,
       exploding: false,
       explodeTimer: 0,
+      isGrappleable: true,
     };
 
     return this.finishGate;
@@ -1529,9 +1554,11 @@ export class LevelGenerator {
     this.bhFinished = false;
 
     this.blackHoleGroup.visible = true;
-    for (const m of [this.bhCore, this.bhHalo, this.bhDisk1, this.bhDisk2]) {
-      m.visible = true;
-      m.scale.setScalar(1);
+    for (const m of [this.bhCore, this.bhHalo, this.bhDisk1, this.bhDisk2, this.bhGrappleSphere]) {
+      if (m) {
+        m.visible = true;
+        m.scale.setScalar(1);
+      }
     }
     this.bhCore.material.color.setHex(0x000000);
     this.bhDisk1.rotation.set(Math.PI * 0.32, 0.2, 0);
@@ -1585,6 +1612,7 @@ export class LevelGenerator {
       this.bhHalo.visible = false;
       this.bhDisk1.visible = false;
       this.bhDisk2.visible = false;
+      if (this.bhGrappleSphere) this.bhGrappleSphere.visible = false;
       if (this.bhShockwave) this.bhShockwave.visible = false;
       for (const p of this.bhParticles) p.mesh.visible = false;
       return;
@@ -1641,15 +1669,32 @@ export class LevelGenerator {
     if (this.blackHoleGroup) {
       this.scene.remove(this.blackHoleGroup);
       this.blackHoleGroup.traverse((child) => {
+        const idx = this.grappleableMeshes.indexOf(child);
+        if (idx !== -1) {
+          this.grappleableMeshes.splice(idx, 1);
+        }
         if (child.geometry) child.geometry.dispose();
         if (child.material) child.material.dispose();
       });
     }
+
+    const removeGrapple = (m) => {
+      if (!m) return;
+      const idx = this.grappleableMeshes.indexOf(m);
+      if (idx !== -1) this.grappleableMeshes.splice(idx, 1);
+    };
+    removeGrapple(this.bhCore);
+    removeGrapple(this.bhHalo);
+    removeGrapple(this.bhDisk1);
+    removeGrapple(this.bhDisk2);
+    removeGrapple(this.bhGrappleSphere);
+
     this.blackHoleGroup = null;
     this.bhCore = null;
     this.bhHalo = null;
     this.bhDisk1 = null;
     this.bhDisk2 = null;
+    this.bhGrappleSphere = null;
     this.bhParticles = [];
     this.bhShockwave = null;
     this.bhDetonated = false;
@@ -1844,14 +1889,14 @@ export class LevelGenerator {
       this.spawnButtressPylon({
         x: ringX - 22.0,
         y: ringY - 10.0,
-        z: ringZ,
+        z: ringZ + 0.04,
         ry: 0.15,
         chunk,
       });
       this.spawnButtressPylon({
         x: ringX + 22.0,
         y: ringY - 10.0,
-        z: ringZ,
+        z: ringZ - 0.04,
         ry: -0.15,
         chunk,
       });

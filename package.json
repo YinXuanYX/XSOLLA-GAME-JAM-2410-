@@ -6,13 +6,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test test_camera_controller.js test_config_v2.js test_config_v3.js test_final_integration.js test_grapple_physics.js test_grapple_system.js test_grapple_targeting.js test_level_generator.js test_phase1b_integration.js test_player_controller.js test_ui_and_audio.js test_v2_features.js test_v3_features.js"
   },
   "dependencies": {
     "cannon-es": "^0.20.0",
     "three": "^0.160.0"
   },
   "devDependencies": {
+    "puppeteer-core": "^25.16.0",
     "vite": "^5.0.0"
   }
 }

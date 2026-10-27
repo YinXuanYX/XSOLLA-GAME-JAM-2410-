@@ -3,6 +3,16 @@ dist/
 *.log
 .DS_Store
 Thumbs.db
+.env
+.env.local
+*.tmp
+*.temp
+
+# Test artifacts & screenshots
+coverage/
+.nyc_output/
+test-results/
+screenshot_*.png
 
 # Agent skills and configurations
 .agents/

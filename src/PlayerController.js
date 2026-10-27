@@ -81,21 +81,33 @@ export class PlayerController {
     const obsidianMat = new THREE.MeshStandardMaterial({
       color: 0x10141f,
       flatShading: true,
-      metalness: 0.85,
+      metalness: 0.86,
       roughness: 0.25,
-      emissive: 0x001830,
-      emissiveIntensity: 0.15,
+      emissive: 0x050c18,
+      emissiveIntensity: 0.25,
     });
     obsidianMat.onBeforeCompile = (shader) => {
       shader.fragmentShader = shader.fragmentShader.replace(
         '#include <emissivemap_fragment>',
         `#include <emissivemap_fragment>
          vec3 vDir = normalize(vViewPosition);
-         float fres = pow(1.0 - abs(dot(vDir, normalize(vNormal))), 3.2);
-         totalEmissiveRadiance += vec3(0.0, 0.42, 0.72) * fres * 0.55;`
+         float NdotV = clamp(abs(dot(vDir, normal)), 0.0, 1.0);
+         float fres = pow(1.0 - NdotV, 2.2);
+         totalEmissiveRadiance += vec3(0.12, 0.42, 0.70) * fres * 1.5;
+         totalDiffuse += vec3(0.08, 0.12, 0.18) * 0.85;`
       );
     };
     this._obsidianMat = obsidianMat;
+
+    const suitCarbonMat = new THREE.MeshStandardMaterial({
+      color: 0x161c28,
+      flatShading: true,
+      metalness: 0.82,
+      roughness: 0.32,
+      emissive: 0x060e1a,
+      emissiveIntensity: 0.3,
+    });
+    this._suitCarbonMat = suitCarbonMat;
 
     const leftHookColor = CONFIG.COLORS.HOOK_LEFT || 0xff0044;
     const rightHookColor = CONFIG.COLORS.HOOK_RIGHT || 0x00aaff;
@@ -103,7 +115,7 @@ export class PlayerController {
     const leftVisorMat = new THREE.MeshStandardMaterial({
       color: leftHookColor,
       emissive: leftHookColor,
-      emissiveIntensity: 3.5,
+      emissiveIntensity: 1.6,
       roughness: 0.1,
       metalness: 0.0,
     });
@@ -112,7 +124,7 @@ export class PlayerController {
     const rightVisorMat = new THREE.MeshStandardMaterial({
       color: rightHookColor,
       emissive: rightHookColor,
-      emissiveIntensity: 3.5,
+      emissiveIntensity: 1.6,
       roughness: 0.1,
       metalness: 0.0,
     });
@@ -121,7 +133,7 @@ export class PlayerController {
     const leftArmStripeMat = new THREE.MeshStandardMaterial({
       color: leftHookColor,
       emissive: leftHookColor,
-      emissiveIntensity: 2.5,
+      emissiveIntensity: 1.5,
       roughness: 0.2,
       metalness: 0.0,
     });
@@ -130,7 +142,7 @@ export class PlayerController {
     const rightArmStripeMat = new THREE.MeshStandardMaterial({
       color: rightHookColor,
       emissive: rightHookColor,
-      emissiveIntensity: 2.5,
+      emissiveIntensity: 1.5,
       roughness: 0.2,
       metalness: 0.0,
     });
@@ -139,7 +151,7 @@ export class PlayerController {
     const emissiveCyanMat = new THREE.MeshStandardMaterial({
       color: 0x00f0ff,
       emissive: 0x00f0ff,
-      emissiveIntensity: 3.0,
+      emissiveIntensity: 1.6,
       roughness: 0.1,
       metalness: 0.0,
     });
@@ -167,17 +179,60 @@ export class PlayerController {
     this.torsoMesh.receiveShadow = true;
     this.pivotGroup.add(this.torsoMesh);
 
-    // Inset Pulsing Cyber-Reactor Core on Chest Face
+    // Inset Pulsing Cyber-Reactor Core on Chest Face with Illuminated Ring Housing
     const reactorCoreMat = new THREE.MeshStandardMaterial({
       color: 0x00f0ff,
       emissive: 0x00f0ff,
-      emissiveIntensity: 3.5,
+      emissiveIntensity: 1.6,
       roughness: 0.1,
       metalness: 0.0,
     });
     this.reactorCore = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.05), reactorCoreMat);
     this.reactorCore.position.set(0, 0.05, -0.21);
     this.pivotGroup.add(this.reactorCore);
+
+    const reactorRingGeo = new THREE.TorusGeometry(0.09, 0.015, 8, 24);
+    const reactorRing = new THREE.Mesh(reactorRingGeo, emissiveCyanMat);
+    reactorRing.position.set(0, 0.05, -0.215);
+    this.pivotGroup.add(reactorRing);
+
+    // Athletic Pectoral Cyber-Plates on Chest (Left Red / Right Blue)
+    const pecGeo = new THREE.BoxGeometry(0.24, 0.20, 0.05);
+    const leftPec = new THREE.Mesh(pecGeo, suitCarbonMat);
+    leftPec.position.set(-0.16, 0.15, -0.19);
+    leftPec.rotation.set(-0.06, 0.06, -0.04);
+    const leftPecStripe = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.018, 0.055), leftArmStripeMat);
+    leftPecStripe.position.set(0, 0.05, 0);
+    leftPec.add(leftPecStripe);
+    this.torsoMesh.add(leftPec);
+
+    const rightPec = new THREE.Mesh(pecGeo.clone(), suitCarbonMat);
+    rightPec.position.set(0.16, 0.15, -0.19);
+    rightPec.rotation.set(-0.06, -0.06, 0.04);
+    const rightPecStripe = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.018, 0.055), rightArmStripeMat);
+    rightPecStripe.position.set(0, 0.05, 0);
+    rightPec.add(rightPecStripe);
+    this.torsoMesh.add(rightPec);
+
+    // Abdominal armor plating tapering to waist (V-taper)
+    const abGeo1 = new THREE.BoxGeometry(0.24, 0.08, 0.05);
+    const abMesh1 = new THREE.Mesh(abGeo1, suitCarbonMat);
+    abMesh1.position.set(0, -0.08, -0.18);
+    this.torsoMesh.add(abMesh1);
+
+    const abGeo2 = new THREE.BoxGeometry(0.19, 0.07, 0.05);
+    const abMesh2 = new THREE.Mesh(abGeo2, suitCarbonMat);
+    abMesh2.position.set(0, -0.18, -0.17);
+    this.torsoMesh.add(abMesh2);
+
+    // Lateral rib flank armor
+    const ribGeo = new THREE.BoxGeometry(0.04, 0.18, 0.26);
+    const leftRib = new THREE.Mesh(ribGeo, suitCarbonMat);
+    leftRib.position.set(-0.36, -0.08, 0);
+    this.torsoMesh.add(leftRib);
+    const rightRib = new THREE.Mesh(ribGeo.clone(), suitCarbonMat);
+    rightRib.position.set(0.36, -0.08, 0);
+    this.torsoMesh.add(rightRib);
 
     // B. Spine Column & Pelvis / Hip Core
     const spineGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.4, 6);
@@ -189,6 +244,12 @@ export class PlayerController {
     this.hipMesh = new THREE.Mesh(hipGeo, obsidianMat);
     this.hipMesh.position.set(0, -0.55, 0);
     this.pivotGroup.add(this.hipMesh);
+
+    // Aerodynamic Gorget / Neck Collar (bridges torso to helmet)
+    const neckGeo = new THREE.CylinderGeometry(0.11, 0.15, 0.18, 8);
+    const neckMesh = new THREE.Mesh(neckGeo, suitCarbonMat);
+    neckMesh.position.set(0, 0.58, -0.02);
+    this.pivotGroup.add(neckMesh);
 
     // C. Head: Dark Slate Octahedron Cyber-Helm
     const headGeo = new THREE.OctahedronGeometry(0.28, 1);
@@ -202,6 +263,59 @@ export class PlayerController {
     this.headMesh.position.set(0, 0.75, 0);
     this.headMesh.castShadow = true;
     this.pivotGroup.add(this.headMesh);
+
+    // Helmet Aerodynamic Jaw Guard & Brow Cowl
+    const jawGeo = new THREE.BoxGeometry(0.22, 0.10, 0.16);
+    const jawMesh = new THREE.Mesh(jawGeo, suitCarbonMat);
+    jawMesh.position.set(0, -0.12, -0.06);
+    this.headMesh.add(jawMesh);
+
+    const browGeo = new THREE.BoxGeometry(0.28, 0.035, 0.12);
+    const browMesh = new THREE.Mesh(browGeo, suitCarbonMat);
+    browMesh.position.set(0, 0.08, -0.15);
+    this.headMesh.add(browMesh);
+
+    // Helmet Temple Comm / Sensor Pods with Split LEDs
+    const commGeo = new THREE.BoxGeometry(0.035, 0.08, 0.16);
+    const leftComm = new THREE.Mesh(commGeo, suitCarbonMat);
+    leftComm.position.set(-0.20, 0.01, 0);
+    const leftCommLed = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.015, 0.12), leftVisorMat);
+    leftComm.add(leftCommLed);
+    this.headMesh.add(leftComm);
+
+    const rightComm = new THREE.Mesh(commGeo.clone(), suitCarbonMat);
+    rightComm.position.set(0.20, 0.01, 0);
+    const rightCommLed = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.015, 0.12), rightVisorMat);
+    rightComm.add(rightCommLed);
+    this.headMesh.add(rightComm);
+
+    // Head Crest Fin & Rear Telemetry Visor (Children of headMesh)
+    const crestGeo = new THREE.BoxGeometry(0.04, 0.12, 0.32);
+    const crestMat = new THREE.MeshStandardMaterial({
+      color: 0x1a2234,
+      metalness: 0.85,
+      roughness: 0.2,
+      flatShading: true,
+    });
+    this.headCrest = new THREE.Mesh(crestGeo, crestMat);
+    this.headCrest.position.set(0, 0.16, -0.04);
+    this.headMesh.add(this.headCrest);
+
+    const crestNeonGeo = new THREE.BoxGeometry(0.015, 0.04, 0.34);
+    const crestNeon = new THREE.Mesh(crestNeonGeo, emissiveCyanMat);
+    crestNeon.position.set(0, 0.05, 0);
+    this.headCrest.add(crestNeon);
+
+    const rearVisorGeo = new THREE.BoxGeometry(0.24, 0.06, 0.06);
+    const rearVisorMat = new THREE.MeshStandardMaterial({
+      color: 0x00f0ff,
+      emissive: 0x00f0ff,
+      emissiveIntensity: 2.2,
+      roughness: 0.1,
+    });
+    this.rearVisor = new THREE.Mesh(rearVisorGeo, rearVisorMat);
+    this.rearVisor.position.set(0, 0.02, 0.16);
+    this.headMesh.add(this.rearVisor);
 
     // D. Angular Wedge Visor with Split Colors and 0.01m Center Gap
     const leftVisorShape = new THREE.Shape();
@@ -236,8 +350,126 @@ export class PlayerController {
     // Alias visorMesh pointing to leftVisor for backward compatibility
     this.visorMesh = this.leftVisor;
 
+    // Tron Identity Disc on Upper Back (z = +0.19, y = 0.20)
+    this.discGroup = new THREE.Group();
+    this.discGroup.position.set(0, 0.20, 0.19);
+
+    const outerDiscGeo = new THREE.TorusGeometry(0.18, 0.018, 8, 32);
+    const outerDiscMat = new THREE.MeshStandardMaterial({
+      color: 0x070a12,
+      metalness: 0.9,
+      roughness: 0.2,
+      flatShading: true,
+    });
+    const outerDisc = new THREE.Mesh(outerDiscGeo, outerDiscMat);
+    this.discGroup.add(outerDisc);
+
+    const innerDiscGeo = new THREE.TorusGeometry(0.14, 0.014, 8, 32);
+    const innerDisc = new THREE.Mesh(innerDiscGeo, emissiveCyanMat);
+    this.discGroup.add(innerDisc);
+
+    const coreDiscGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.025, 16);
+    coreDiscGeo.rotateX(Math.PI / 2);
+    const coreDisc = new THREE.Mesh(coreDiscGeo, obsidianMat);
+    const coreDiscRing = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.008, 6, 24), emissiveCyanMat);
+    coreDisc.add(coreDiscRing);
+    this.discGroup.add(coreDisc);
+
+    this.pivotGroup.add(this.discGroup);
+
+    // Segmented Cyber-Spine (5 articulated vertebrae with pulsing LED nodes)
+    this.spineGroup = new THREE.Group();
+    this.spineVertebrae = [];
+    const vertGeo = new THREE.BoxGeometry(0.10, 0.05, 0.06);
+    const vertNodeGeo = new THREE.BoxGeometry(0.03, 0.03, 0.02);
+    for (let v = 0; v < 5; v++) {
+      const vert = new THREE.Mesh(vertGeo, obsidianMat);
+      vert.position.set(0, -0.28 + v * 0.11, 0.18);
+      const nodeMat = new THREE.MeshStandardMaterial({
+        color: v % 2 === 0 ? leftHookColor : rightHookColor,
+        emissive: v % 2 === 0 ? leftHookColor : rightHookColor,
+        emissiveIntensity: 2.2,
+        roughness: 0.1,
+      });
+      const node = new THREE.Mesh(vertNodeGeo, nodeMat);
+      node.position.set(0, 0, 0.032);
+      vert.add(node);
+      this.spineVertebrae.push(vert);
+      this.spineGroup.add(vert);
+    }
+    this.pivotGroup.add(this.spineGroup);
+
+    // Dual Jetpack Ion Boosters with dynamic exhaust flames & aerodynamic intake cowlings
+    this.jetpackBoosters = new THREE.Group();
+    const boosterBodyGeo = new THREE.CylinderGeometry(0.065, 0.075, 0.28, 8);
+    const boosterNozzleGeo = new THREE.CylinderGeometry(0.045, 0.07, 0.08, 8);
+    const boosterCapGeo = new THREE.CylinderGeometry(0.072, 0.065, 0.05, 8);
+    const plumeGeo = new THREE.ConeGeometry(0.05, 0.24, 8);
+    plumeGeo.rotateX(Math.PI);
+    const plumeMat = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      transparent: true,
+      opacity: 0.75,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+
+    const leftBooster = new THREE.Mesh(boosterBodyGeo, obsidianMat);
+    leftBooster.position.set(-0.21, 0.06, 0.18);
+    leftBooster.rotation.set(0.26, 0, -0.10);
+    const leftCap = new THREE.Mesh(boosterCapGeo, suitCarbonMat);
+    leftCap.position.set(0, 0.15, 0);
+    leftBooster.add(leftCap);
+    const leftBoosterStripe = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.22, 0.14), leftArmStripeMat);
+    leftBoosterStripe.position.set(-0.065, 0, 0);
+    leftBooster.add(leftBoosterStripe);
+    const leftNozzleMesh = new THREE.Mesh(boosterNozzleGeo, emissiveCyanMat);
+    leftNozzleMesh.position.set(0, -0.16, 0);
+    leftBooster.add(leftNozzleMesh);
+    this.leftThrusterPlume = new THREE.Mesh(plumeGeo, plumeMat);
+    this.leftThrusterPlume.position.set(0, -0.26, 0);
+    leftBooster.add(this.leftThrusterPlume);
+    this.jetpackBoosters.add(leftBooster);
+
+    const rightBooster = new THREE.Mesh(boosterBodyGeo.clone(), obsidianMat);
+    rightBooster.position.set(0.21, 0.06, 0.18);
+    rightBooster.rotation.set(0.26, 0, 0.10);
+    const rightCap = new THREE.Mesh(boosterCapGeo.clone(), suitCarbonMat);
+    rightCap.position.set(0, 0.15, 0);
+    rightBooster.add(rightCap);
+    const rightBoosterStripe = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.22, 0.14), rightArmStripeMat);
+    rightBoosterStripe.position.set(0.065, 0, 0);
+    rightBooster.add(rightBoosterStripe);
+    const rightNozzleMesh = new THREE.Mesh(boosterNozzleGeo.clone(), emissiveCyanMat);
+    rightNozzleMesh.position.set(0, -0.16, 0);
+    rightBooster.add(rightNozzleMesh);
+    this.rightThrusterPlume = new THREE.Mesh(plumeGeo.clone(), plumeMat);
+    this.rightThrusterPlume.position.set(0, -0.26, 0);
+    rightBooster.add(this.rightThrusterPlume);
+    this.jetpackBoosters.add(rightBooster);
+
+    this.pivotGroup.add(this.jetpackBoosters);
+
+    // Aerodynamic Stabilizer Winglets
+    const wingletGeo = new THREE.BoxGeometry(0.20, 0.02, 0.07);
+    this.leftWinglet = new THREE.Mesh(wingletGeo, obsidianMat);
+    this.leftWinglet.position.set(-0.34, 0.14, 0.16);
+    this.leftWinglet.rotation.set(0.22, -0.12, -0.32);
+    const leftWingTrim = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.015, 0.02), leftArmStripeMat);
+    leftWingTrim.position.set(0, 0, 0.036);
+    this.leftWinglet.add(leftWingTrim);
+    this.pivotGroup.add(this.leftWinglet);
+
+    this.rightWinglet = new THREE.Mesh(wingletGeo.clone(), obsidianMat);
+    this.rightWinglet.position.set(0.34, 0.14, 0.16);
+    this.rightWinglet.rotation.set(0.22, 0.12, 0.32);
+    const rightWingTrim = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.015, 0.02), rightArmStripeMat);
+    rightWingTrim.position.set(0, 0, 0.036);
+    this.rightWinglet.add(rightWingTrim);
+    this.pivotGroup.add(this.rightWinglet);
+
     // E. Shoulder Neon Trims & Hip Thrusters
-    const shoulderGeo = new THREE.BoxGeometry(0.12, 0.05, 0.36);
+    const shoulderGeo = new THREE.BoxGeometry(0.04, 0.02, 0.28);
     this.leftShoulderTrim = new THREE.Mesh(shoulderGeo, leftVisorMat);
     this.leftShoulderTrim.position.set(-0.38, 0.45, 0);
     this.pivotGroup.add(this.leftShoulderTrim);
@@ -246,8 +478,18 @@ export class PlayerController {
     this.rightShoulderTrim.position.set(0.38, 0.45, 0);
     this.pivotGroup.add(this.rightShoulderTrim);
 
+    // Hip Joint Ball Sockets
+    const hipSocketGeo = new THREE.CylinderGeometry(0.065, 0.065, 0.06, 8);
+    hipSocketGeo.rotateZ(Math.PI / 2);
+    const leftHipSocket = new THREE.Mesh(hipSocketGeo, suitCarbonMat);
+    leftHipSocket.position.set(-0.14, -0.55, 0);
+    this.pivotGroup.add(leftHipSocket);
+    const rightHipSocket = new THREE.Mesh(hipSocketGeo.clone(), suitCarbonMat);
+    rightHipSocket.position.set(0.14, -0.55, 0);
+    this.pivotGroup.add(rightHipSocket);
+
     // Hip Thruster Pods (Left & Right at ±0.42, -0.1, 0)
-    const podGeo = new THREE.BoxGeometry(0.18, 0.22, 0.45);
+    const podGeo = new THREE.BoxGeometry(0.16, 0.20, 0.42);
     this.leftPod = new THREE.Mesh(podGeo, obsidianMat);
     this.leftPod.position.set(-0.42, -0.1, 0);
     this.leftPod.castShadow = true;
@@ -256,7 +498,7 @@ export class PlayerController {
     this.rightPod.position.set(0.42, -0.1, 0);
     this.rightPod.castShadow = true;
 
-    const podStripeGeo = new THREE.BoxGeometry(0.04, 0.24, 0.47);
+    const podStripeGeo = new THREE.BoxGeometry(0.02, 0.16, 0.36);
     this.leftPodTrim = new THREE.Mesh(podStripeGeo, leftVisorMat);
     this.leftPodTrim.name = 'LeftPodTrim';
     this.leftPodTrim.position.set(-0.08, 0, 0);
@@ -267,57 +509,124 @@ export class PlayerController {
     this.rightPodTrim.position.set(0.08, 0, 0);
     this.rightPod.add(this.rightPodTrim);
 
+    const podNozzleGeo = new THREE.CylinderGeometry(0.04, 0.06, 0.08, 8);
+    podNozzleGeo.rotateX(Math.PI / 2);
+    const leftPodNozzle = new THREE.Mesh(podNozzleGeo, emissiveCyanMat);
+    leftPodNozzle.position.set(0, 0, 0.21);
+    this.leftPod.add(leftPodNozzle);
+    const rightPodNozzle = new THREE.Mesh(podNozzleGeo.clone(), emissiveCyanMat);
+    rightPodNozzle.position.set(0, 0, 0.21);
+    this.rightPod.add(rightPodNozzle);
+
     this.pivotGroup.add(this.leftPod);
     this.pivotGroup.add(this.rightPod);
 
+    // Upper Thigh Exoskeleton Struts with Outer Armor Guards
+    const thighGeo = new THREE.BoxGeometry(0.11, 0.26, 0.13);
+    this.leftThigh = new THREE.Mesh(thighGeo, obsidianMat);
+    this.leftThigh.position.set(-0.14, -0.68, 0.02);
+    this.leftThigh.rotation.set(0.06, 0, 0.04);
+    const leftThighStripe = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.22, 0.135), leftArmStripeMat);
+    this.leftThigh.add(leftThighStripe);
+    const leftThighPlate = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.20, 0.11), suitCarbonMat);
+    leftThighPlate.position.set(-0.06, 0, 0);
+    this.leftThigh.add(leftThighPlate);
+    this.pivotGroup.add(this.leftThigh);
+
+    this.rightThigh = new THREE.Mesh(thighGeo.clone(), obsidianMat);
+    this.rightThigh.position.set(0.14, -0.68, 0.02);
+    this.rightThigh.rotation.set(0.06, 0, -0.04);
+    const rightThighStripe = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.22, 0.135), rightArmStripeMat);
+    this.rightThigh.add(rightThighStripe);
+    const rightThighPlate = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.20, 0.11), suitCarbonMat);
+    rightThighPlate.position.set(0.06, 0, 0);
+    this.rightThigh.add(rightThighPlate);
+    this.pivotGroup.add(this.rightThigh);
+
     // F. Floating Shin Guards with Ankle Trims & Thruster Nozzles
-    const shinGeo = new THREE.BoxGeometry(0.09, 0.35, 0.12);
+    const shinGeo = new THREE.BoxGeometry(0.10, 0.32, 0.13);
     this.leftShin = new THREE.Mesh(shinGeo, obsidianMat);
     this.leftShin.position.set(-0.14, -0.95, 0.04);
     const leftAnkleTrim = new THREE.Mesh(
-      new THREE.BoxGeometry(0.11, 0.04, 0.14),
+      new THREE.BoxGeometry(0.105, 0.03, 0.135),
       leftArmStripeMat
     );
-    leftAnkleTrim.position.set(0, -0.16, 0);
+    leftAnkleTrim.position.set(0, -0.14, 0);
     this.leftShin.add(leftAnkleTrim);
 
-    const nozzleGeo = new THREE.CylinderGeometry(0.04, 0.06, 0.08, 6);
+    const nozzleGeo = new THREE.CylinderGeometry(0.035, 0.05, 0.08, 8);
     const leftNozzle = new THREE.Mesh(nozzleGeo, emissiveCyanMat);
-    leftNozzle.position.set(0, -0.20, -0.04);
+    leftNozzle.position.set(0, -0.18, -0.04);
     this.leftShin.add(leftNozzle);
+
+    // Knee Armor Guard & Parkour Mag-Boot (Left)
+    const kneeGeo = new THREE.BoxGeometry(0.11, 0.10, 0.07);
+    const leftKnee = new THREE.Mesh(kneeGeo, obsidianMat);
+    leftKnee.position.set(0, 0.14, 0.05);
+    const leftKneeAccent = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.075), leftArmStripeMat);
+    leftKnee.add(leftKneeAccent);
+    this.leftShin.add(leftKnee);
+
+    const bootGeo = new THREE.BoxGeometry(0.11, 0.09, 0.22);
+    const leftBoot = new THREE.Mesh(bootGeo, obsidianMat);
+    leftBoot.position.set(0, -0.21, -0.04);
+    const leftSole = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.015, 0.20), leftArmStripeMat);
+    leftSole.position.set(0, -0.045, 0);
+    leftBoot.add(leftSole);
+    this.leftShin.add(leftBoot);
+
     this.pivotGroup.add(this.leftShin);
 
     this.rightShin = new THREE.Mesh(shinGeo.clone(), obsidianMat);
     this.rightShin.position.set(0.14, -0.95, 0.04);
     const rightAnkleTrim = new THREE.Mesh(
-      new THREE.BoxGeometry(0.11, 0.04, 0.14),
+      new THREE.BoxGeometry(0.105, 0.03, 0.135),
       rightArmStripeMat
     );
-    rightAnkleTrim.position.set(0, -0.16, 0);
+    rightAnkleTrim.position.set(0, -0.14, 0);
     this.rightShin.add(rightAnkleTrim);
 
     const rightNozzle = new THREE.Mesh(nozzleGeo.clone(), emissiveCyanMat);
-    rightNozzle.position.set(0, -0.20, -0.04);
+    rightNozzle.position.set(0, -0.18, -0.04);
     this.rightShin.add(rightNozzle);
+
+    // Knee Armor Guard & Parkour Mag-Boot (Right)
+    const rightKnee = new THREE.Mesh(kneeGeo.clone(), obsidianMat);
+    rightKnee.position.set(0, 0.14, 0.05);
+    const rightKneeAccent = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.075), rightArmStripeMat);
+    rightKnee.add(rightKneeAccent);
+    this.rightShin.add(rightKnee);
+
+    const rightBoot = new THREE.Mesh(bootGeo.clone(), obsidianMat);
+    rightBoot.position.set(0, -0.21, -0.04);
+    const rightSole = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.015, 0.20), rightArmStripeMat);
+    rightSole.position.set(0, -0.045, 0);
+    rightBoot.add(rightSole);
+    this.rightShin.add(rightBoot);
+
     this.pivotGroup.add(this.rightShin);
 
-    // G. 6-Segment Animated Energy Mantle Ribbon
+    // G. Twin Lateral Photonic Streamers (6 segments: 3 left Crimson, 3 right Cyan/Blue)
     this.mantleSegments = [];
     this._mantleBasePositions = [];
     for (let i = 0; i < 6; i++) {
-      const segW = 0.45 - i * 0.04;
-      const segH = 0.22;
+      const isRight = i >= 3;
+      const k = isRight ? i - 3 : i;
+      const segW = 0.12 - k * 0.02;
+      const segH = 0.20;
       const segGeo = new THREE.PlaneGeometry(segW, segH, 1, 4);
+      const segColor = isRight ? rightHookColor : leftHookColor;
       const segMat = new THREE.MeshBasicMaterial({
-        color: i < 3 ? leftHookColor : rightHookColor,
+        color: segColor,
         transparent: true,
-        opacity: 0.65 - i * 0.09,
+        opacity: 0.75 - k * 0.16,
         side: THREE.DoubleSide,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
       const segMesh = new THREE.Mesh(segGeo, segMat);
-      segMesh.position.set(0, -0.5 - i * 0.18, 0.22 + i * 0.14);
+      const posX = isRight ? 0.18 : -0.18;
+      segMesh.position.set(posX, 0.02 - k * 0.15, 0.22 + k * 0.12);
       this.mantleSegments.push(segMesh);
       this.pivotGroup.add(segMesh);
 
@@ -370,6 +679,18 @@ export class PlayerController {
     this.leftPauldron.castShadow = true;
     this.leftShoulder.add(this.leftPauldron);
 
+    // Pauldron Accent Trim (Left Red)
+    const leftPaulTrim = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.14, 0.20), leftArmStripeMat);
+    leftPaulTrim.position.set(-0.12, 0.04, 0);
+    this.leftShoulder.add(leftPaulTrim);
+
+    // Articulated Elbow Cyber-Hinge
+    const elbowGeo = new THREE.CylinderGeometry(0.068, 0.068, 0.14, 8);
+    elbowGeo.rotateZ(Math.PI / 2);
+    const leftElbow = new THREE.Mesh(elbowGeo, suitCarbonMat);
+    leftElbow.position.set(0, 0, 0.26);
+    this.leftShoulder.add(leftElbow);
+
     this.leftArmSegment = new THREE.Mesh(armSegmentGeo, obsidianMat);
     this.leftArmSegment.position.set(0, 0, 0.32);
     this.leftArmSegment.castShadow = true;
@@ -384,6 +705,15 @@ export class PlayerController {
     this.leftGauntlet.castShadow = true;
     this.leftShoulder.add(this.leftGauntlet);
 
+    // Grapple Winch Spool on gauntlet top
+    const winchGeo = new THREE.CylinderGeometry(0.055, 0.055, 0.08, 8);
+    winchGeo.rotateX(Math.PI / 2);
+    const leftWinch = new THREE.Mesh(winchGeo, suitCarbonMat);
+    leftWinch.position.set(0, 0.09, 0.60);
+    const leftWinchRing = new THREE.Mesh(new THREE.TorusGeometry(0.042, 0.008, 6, 16), leftVisorMat);
+    leftWinch.add(leftWinchRing);
+    this.leftShoulder.add(leftWinch);
+
     this.leftMuzzle = new THREE.Object3D();
     this.leftMuzzle.name = 'LeftMuzzleNode';
     this.leftMuzzle.position.set(0, 0, 0.76);
@@ -394,6 +724,16 @@ export class PlayerController {
     this.rightPauldron.position.set(0, 0, 0);
     this.rightPauldron.castShadow = true;
     this.rightShoulder.add(this.rightPauldron);
+
+    // Pauldron Accent Trim (Right Blue)
+    const rightPaulTrim = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.14, 0.20), rightArmStripeMat);
+    rightPaulTrim.position.set(0.12, 0.04, 0);
+    this.rightShoulder.add(rightPaulTrim);
+
+    // Articulated Elbow Cyber-Hinge (Right)
+    const rightElbow = new THREE.Mesh(elbowGeo.clone(), suitCarbonMat);
+    rightElbow.position.set(0, 0, 0.26);
+    this.rightShoulder.add(rightElbow);
 
     this.rightArmSegment = new THREE.Mesh(armSegmentGeo.clone(), obsidianMat);
     this.rightArmSegment.position.set(0, 0, 0.32);
@@ -408,6 +748,13 @@ export class PlayerController {
     this.rightGauntlet.position.set(0, 0, 0.62);
     this.rightGauntlet.castShadow = true;
     this.rightShoulder.add(this.rightGauntlet);
+
+    // Grapple Winch Spool on right gauntlet top
+    const rightWinch = new THREE.Mesh(winchGeo.clone(), suitCarbonMat);
+    rightWinch.position.set(0, 0.09, 0.60);
+    const rightWinchRing = new THREE.Mesh(new THREE.TorusGeometry(0.042, 0.008, 6, 16), rightVisorMat);
+    rightWinch.add(rightWinchRing);
+    this.rightShoulder.add(rightWinch);
 
     this.rightMuzzle = new THREE.Object3D();
     this.rightMuzzle.name = 'RightMuzzleNode';
@@ -793,7 +1140,7 @@ export class PlayerController {
     // 5. Restore energy mantle ribbon vertices & reactor core idle pulse
     this.elapsedTime = 0;
     if (this.reactorCore && this.reactorCore.material) {
-      this.reactorCore.material.emissiveIntensity = 3.5;
+      this.reactorCore.material.emissiveIntensity = 1.6;
     }
     if (this.mantleSegments && this._mantleBasePositions) {
       for (let i = 0; i < this.mantleSegments.length; i++) {
@@ -805,6 +1152,13 @@ export class PlayerController {
           posAttr.needsUpdate = true;
         }
       }
+    }
+
+    if (this.leftThrusterPlume && this.rightThrusterPlume) {
+      this.leftThrusterPlume.scale.set(1.0, 0.08, 1.0);
+      this.rightThrusterPlume.scale.set(1.0, 0.08, 1.0);
+      this.leftThrusterPlume.material.opacity = 0.25;
+      this.rightThrusterPlume.material.opacity = 0.25;
     }
 
     this.mesh.updateMatrixWorld(true);
@@ -968,10 +1322,27 @@ export class PlayerController {
     const targetPitch = speedRatio * 0.65;
     this.pivotGroup.rotation.x = targetPitch;
 
-    // 5. Bank pivotGroup.rotation.z proportional to angular yaw delta
+    // 5. Bank pivotGroup.rotation.z proportional to angular yaw delta (scaled by speed so idle avatar stays level)
     const angularTurnRate = safeDt > 1e-6 ? - (diff * yawLerp) / safeDt : 0;
     const roll = Math.max(-0.55, Math.min(0.55, -angularTurnRate * 0.4));
-    this.pivotGroup.rotation.z = roll;
+    const speedScale = Math.min(1.0, hSpeed / 10.0);
+    this.pivotGroup.rotation.z = roll * speedScale;
+
+    // Dynamic flight leg posture: relaxed athletic stance when grounded/idle, streamlined aero tuck when flying
+    if (this.leftThigh && this.rightThigh && this.leftShin && this.rightShin) {
+      if (totalSpeed < 1.0) {
+        this.leftThigh.rotation.set(0.04, 0, 0.04);
+        this.rightThigh.rotation.set(0.04, 0, -0.04);
+        this.leftShin.rotation.set(-0.04, 0, -0.02);
+        this.rightShin.rotation.set(-0.04, 0, 0.02);
+      } else {
+        const flightTuck = Math.min(0.35, totalSpeed / 45.0);
+        this.leftThigh.rotation.set(-0.10 - flightTuck, 0, 0.03);
+        this.rightThigh.rotation.set(-0.10 - flightTuck, 0, -0.03);
+        this.leftShin.rotation.set(0.20 + flightTuck * 0.8, 0, -0.02);
+        this.rightShin.rotation.set(0.20 + flightTuck * 0.8, 0, 0.02);
+      }
+    }
 
     // Update character hierarchy world matrices for arms, muzzles, and trail emitters
     this.mesh.updateMatrixWorld(true);
@@ -988,22 +1359,37 @@ export class PlayerController {
     // 8. Spectre Cyber-Runner Rig Animations (Reactor Core Pulse & Waving Energy Mantle)
     this.elapsedTime = (this.elapsedTime || 0) + safeDt;
     if (this.reactorCore && this.reactorCore.material) {
-      const pulse = 2.5 + Math.sin(this.elapsedTime * 4.0) * 1.5;
+      const pulse = 1.4 + Math.sin(this.elapsedTime * 4.0) * 0.4;
       this.reactorCore.material.emissiveIntensity = pulse;
     }
 
+    if (this.leftThrusterPlume && this.rightThrusterPlume) {
+      const isFlying = totalSpeed > 1.0;
+      const plumeScale = isFlying ? (0.35 + Math.min(2.0, totalSpeed / 16.0)) : 0.08;
+      const plumeFlicker = 1.0 + Math.sin(this.elapsedTime * 25.0) * 0.15;
+      this.leftThrusterPlume.scale.set(1.0, plumeScale * plumeFlicker, 1.0);
+      this.rightThrusterPlume.scale.set(1.0, plumeScale * plumeFlicker, 1.0);
+      this.leftThrusterPlume.material.opacity = isFlying ? 0.85 : 0.25;
+      this.rightThrusterPlume.material.opacity = isFlying ? 0.85 : 0.25;
+    }
+
     if (this.mantleSegments && this._mantleBasePositions) {
+      const speedFactor = 1.0 + Math.min(2.5, totalSpeed / 18.0);
       for (let i = 0; i < this.mantleSegments.length; i++) {
         const seg = this.mantleSegments[i];
         const posAttr = seg.geometry?.attributes?.position;
         const basePositions = this._mantleBasePositions[i];
         if (posAttr && basePositions) {
+          const isRight = i >= 3;
+          const k = isRight ? i - 3 : i;
           for (let v = 0; v < posAttr.count; v++) {
             const row = Math.floor(v / 2); // 0-4 vertical subdivisions
             const baseX = basePositions[v * 3];
             const baseY = basePositions[v * 3 + 1];
-            posAttr.setX(v, baseX + Math.sin(this.elapsedTime * 4.0 + i * 0.8 + row * 1.2) * 0.06 * (row / 4));
-            posAttr.setY(v, baseY + Math.cos(this.elapsedTime * 3.0 + i * 0.5) * 0.03 * (row / 4));
+            const wave = Math.sin(this.elapsedTime * 6.0 * speedFactor + k * 0.9 + row * 1.3) * 0.04 * (row / 4);
+            const sway = Math.cos(this.elapsedTime * 4.0 + k * 0.6) * 0.02 * (row / 4);
+            posAttr.setX(v, baseX + (isRight ? sway : -sway));
+            posAttr.setY(v, baseY + wave);
           }
           posAttr.needsUpdate = true;
         }

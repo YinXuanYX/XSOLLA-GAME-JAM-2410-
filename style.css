@@ -131,13 +131,13 @@ html, body {
 .course-selector {
   display: flex;
   gap: 0.4rem;
-  background: rgba(4, 7, 17, 0.82);
-  padding: 0.25rem;
-  border-radius: 8px;
-  border: 1px solid rgba(0, 240, 255, 0.28);
-  box-shadow: 0 0 18px rgba(0, 170, 255, 0.15);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(6, 10, 22, 0.85);
+  padding: 0.28rem;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6), 0 0 14px rgba(0, 170, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .course-pill {
@@ -254,14 +254,14 @@ html, body {
   gap: 0.4rem;
 }
 
-.timer-wrapper {
-  background: rgba(4, 7, 17, 0.82);
+.timer-wrapper, #timer-container {
+  background: rgba(6, 10, 22, 0.85);
   padding: 0.4rem 1.6rem;
-  border-radius: 10px;
-  border: 1px solid rgba(0, 240, 255, 0.28);
-  box-shadow: 0 0 18px rgba(0, 170, 255, 0.15);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  border-radius: 6px;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  box-shadow: 0 4px 22px rgba(0, 0, 0, 0.65), 0 0 18px rgba(0, 170, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .timer-text {
@@ -346,9 +346,27 @@ html, body {
 }
 
 /* ==========================================================================
+   SLEEK DARK-GLASS HUD CARDS
+   ========================================================================== */
+#top-left-panel,
+#timer-container,
+#speedometer {
+  background: rgba(6, 10, 22, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+#top-left-panel {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 14px rgba(0, 170, 255, 0.15);
+}
+
+/* ==========================================================================
    DYNAMIC CROSSHAIR RETICLE (Center Screen)
    ========================================================================== */
-.crosshair-container {
+.crosshair-container, #crosshair {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -359,10 +377,19 @@ html, body {
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  filter: drop-shadow(0 0 2px #000) drop-shadow(0 0 5px #000);
+}
+
+/* Reticle & HUD Elements Enhanced Drop-Shadow */
+#crosshair,
+#bracket-left,
+#bracket-right,
+#range-readout {
+  filter: drop-shadow(0 0 2px #000) drop-shadow(0 0 5px #000);
 }
 
 /* Left & Right Hook Brackets */
-.reticle-bracket {
+.reticle-bracket, #bracket-left, #bracket-right {
   position: absolute;
   top: 50%;
   width: 20px;
@@ -370,6 +397,7 @@ html, body {
   transform: translateY(-50%);
   color: rgba(255, 255, 255, 0.4);
   transition: all 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: drop-shadow(0 0 2px #000) drop-shadow(0 0 5px #000);
 }
 
 .bracket-left {
@@ -383,7 +411,7 @@ html, body {
 .bracket-svg {
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 8px currentColor);
 }
 
 /* Left Hook Active Glow (Beat Saber Crimson Red #ff0044) */
@@ -391,7 +419,7 @@ html, body {
   color: #ff0044;
   text-shadow: 0 0 14px #ff0044, 0 0 28px #ff0044;
   transform: translateY(-50%) translateX(-4px) scale(1.18);
-  filter: drop-shadow(0 0 14px #ff0044);
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 14px #ff0044);
 }
 
 /* Right Hook Active Glow (Beat Saber Electric Blue #00aaff) */
@@ -399,52 +427,58 @@ html, body {
   color: #00aaff;
   text-shadow: 0 0 14px #00aaff, 0 0 28px #00aaff;
   transform: translateY(-50%) translateX(4px) scale(1.18);
-  filter: drop-shadow(0 0 14px #00aaff);
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 14px #00aaff);
 }
 
 /* Central Reticle Dot */
-.reticle-dot {
+.reticle-dot, #reticle-dot {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.45);
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.95);
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.95));
   transition: all 0.15s ease-out;
 }
 
 .reticle-dot.target-locked {
   background: var(--emerald-green);
   box-shadow: 0 0 10px var(--emerald-green);
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 8px var(--emerald-green));
   transform: scale(1.4);
 }
 
 .reticle-dot.target-magnet {
   background: var(--cyan-hook);
   box-shadow: 0 0 12px var(--cyan-hook);
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 8px var(--cyan-hook));
   transform: scale(1.5);
 }
 
 /* Range Readout Label */
-.range-readout {
+.range-readout, #range-readout {
   position: absolute;
   top: 58px;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.05em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   text-align: center;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 0.9);
+  filter: drop-shadow(0 0 2px #000) drop-shadow(0 0 5px #000);
   transition: all 0.12s ease-out;
 }
 
 .range-readout.in-range {
   color: var(--emerald-green);
-  text-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 8px var(--emerald-green));
 }
 
 .range-readout.magnet-snap {
   color: var(--cyan-hook);
   text-shadow: 0 0 8px var(--cyan-glow);
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 8px var(--cyan-hook));
 }
 
 /* ==========================================================================
@@ -457,18 +491,18 @@ html, body {
   width: 100%;
 }
 
-.speedometer-container {
+.speedometer-container, #speedometer {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(4, 7, 17, 0.82);
+  background: rgba(6, 10, 22, 0.85);
   padding: 0.75rem 2rem 0.9rem;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 240, 255, 0.28);
-  box-shadow: 0 0 18px rgba(0, 170, 255, 0.15);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  border-radius: 6px;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  box-shadow: 0 -4px 22px rgba(0, 0, 0, 0.65), 0 0 18px rgba(0, 170, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   width: 380px;
   max-width: 90vw;
 }
@@ -511,8 +545,10 @@ html, body {
   position: relative;
   width: 100%;
   height: 8px;
-  background: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)),
+              repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(255, 255, 255, 0.22) 19px, rgba(255, 255, 255, 0.22) 20px);
   border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
 

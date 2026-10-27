@@ -54,10 +54,13 @@ composer.addPass(new RenderPass(scene, camera));
 
 export const bloomPass = new UnrealBloomPass(
   new THREE.Vector2(window.innerWidth, window.innerHeight),
-  CONFIG.BLOOM?.STRENGTH ?? 0.65,
-  CONFIG.BLOOM?.RADIUS ?? 0.28,
-  CONFIG.BLOOM?.THRESHOLD ?? 0.82
+  CONFIG.BLOOM?.STRENGTH ?? 0.45,
+  CONFIG.BLOOM?.RADIUS ?? 0.30,
+  CONFIG.BLOOM?.THRESHOLD ?? 0.72
 );
+bloomPass.threshold = 0.72;
+bloomPass.strength = 0.45;
+bloomPass.radius = 0.30;
 composer.addPass(bloomPass);
 composer.addPass(new OutputPass());
 
@@ -87,6 +90,18 @@ const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.4);
 fillLight.position.set(-60, -40, -50);
 scene.add(fillLight);
 
+// Subtle rim light from above-behind camera so gunmetal cyber-suit catches crisp specular highlights
+const playerRimLight = new THREE.DirectionalLight(0xd8f0ff, 1.8);
+playerRimLight.position.set(0, 30, 40);
+scene.add(playerRimLight);
+scene.add(playerRimLight.target);
+
+// Subtle front-fill light to illuminate chest plates and reactor core details
+const playerFillLight = new THREE.DirectionalLight(0x5088aa, 0.9);
+playerFillLight.position.set(0, 10, -20);
+scene.add(playerFillLight);
+scene.add(playerFillLight.target);
+
 // 4. Subsystem Instantiations
 export const physicsWorld = new PhysicsWorld();
 export const levelGen = new LevelGenerator(scene, physicsWorld);
@@ -95,6 +110,22 @@ export const cameraCtrl = new CameraController(camera, renderer.domElement);
 export const grapple = new GrappleSystem(scene, camera, player, CONFIG);
 export const ui = new UIManager();
 export const audio = new AudioSynth();
+
+if (typeof window !== 'undefined') {
+  window.game = {
+    physicsWorld,
+    levelGen,
+    player,
+    cameraCtrl,
+    grapple,
+    ui,
+    audio,
+    get gameState() { return gameState; },
+    triggerCourseClear,
+    restartCourse,
+    switchCourse,
+  };
+}
 
 // 5. Game State Machine (FSM)
 // States: 'MENU', 'READY', 'RUNNING', 'DYING', 'DEAD', 'FINISHING', 'FINISHED'
@@ -515,7 +546,7 @@ export function animate(now) {
         const dx = player.body.position.x - gate.x;
         const dy = player.body.position.y - gate.y;
         const dz = player.body.position.z - gate.z;
-        const inCaptureSphere = Math.hypot(dx, dy, dz) < 20.0;
+        const inCaptureSphere = Math.hypot(dx, dy, dz) < 28.0;
         const passedGatePlane = player.body.position.z <= gate.z && Math.hypot(dx, dy) <= gate.radius;
         if (inCaptureSphere || passedGatePlane) {
           triggerCourseClear();
@@ -537,6 +568,23 @@ export function animate(now) {
   cameraCtrl.update(dt, player.mesh.position, playerSpeed, levelGen.grappleableMeshes);
   grapple.updateVisuals(levelGen.grappleableMeshes, dt);
   levelGen.update(dt, player.body.position, now * 0.001);
+
+  // Position specular rim light and front fill light relative to player for crisp suit highlights
+  playerRimLight.position.set(
+    player.mesh.position.x,
+    player.mesh.position.y + 14,
+    player.mesh.position.z + 20
+  );
+  playerRimLight.target.position.copy(player.mesh.position);
+  playerRimLight.target.updateMatrixWorld();
+
+  playerFillLight.position.set(
+    player.mesh.position.x - 8,
+    player.mesh.position.y + 10,
+    player.mesh.position.z - 16
+  );
+  playerFillLight.target.position.copy(player.mesh.position);
+  playerFillLight.target.updateMatrixWorld();
 
   // Sync HUD telemetry
   ui.updateHUD({

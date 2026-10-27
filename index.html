@@ -20,7 +20,7 @@
   <div id="hud">
     <!-- Top Bar: Course Selector, Restart Hint, Controls -->
     <header class="hud-top-bar">
-      <div class="hud-left-panel">
+      <div class="hud-left-panel" id="top-left-panel">
         <div class="game-logo">AERO<span class="logo-accent">-HOOK</span></div>
         <nav class="course-selector" id="course-selector">
           <button class="course-pill active" data-course="1" id="pill-course-1">
@@ -55,7 +55,7 @@
 
       <!-- Top Center: Timer, Personal Best, Medal Splits -->
       <div class="hud-center-panel">
-        <div class="timer-wrapper">
+        <div class="timer-wrapper" id="timer-container">
           <div id="timer-display" class="timer-text">00:00.000</div>
         </div>
         <div class="timer-sub-row">
@@ -96,7 +96,7 @@
 
     <!-- Bottom Center Speedometer -->
     <footer class="hud-bottom-bar">
-      <div class="speedometer-container">
+      <div class="speedometer-container" id="speedometer">
         <div class="speedometer-readouts">
           <div class="speed-main">
             <span id="speed-value" class="speed-number">00</span>

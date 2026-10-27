@@ -214,8 +214,9 @@ export class CameraController {
       this.raycaster.near = 0.05;
       this.raycaster.far = armDistance;
       const hits = this.raycaster.intersectObjects(meshList, true);
-      if (hits && hits.length > 0 && Number.isFinite(hits[0].distance)) {
-        const d_hit = hits[0].distance;
+      const wallHit = hits.find((h) => !h.object?.userData?.noCameraClip);
+      if (wallHit && Number.isFinite(wallHit.distance)) {
+        const d_hit = wallHit.distance;
         dist = Math.min(armDistance, Math.max(1.2, d_hit - 0.35));
       }
     }
